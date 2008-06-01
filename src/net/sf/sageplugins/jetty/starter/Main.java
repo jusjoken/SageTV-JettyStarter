@@ -1,0 +1,210 @@
+package net.sf.sageplugins.jetty.starter;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.mortbay.xml.XmlConfiguration;
+
+// TODO listen on a port for restart - look at 'Jetty start' source code
+public class Main implements Runnable
+{
+    private JettyStarterProperties starterProperties = null;
+
+    /**
+     * Called by SageTV to start the Jetty application server
+     */
+    public void run()
+    {
+        Thread.currentThread().setName("Jetty Starter");
+
+        log("Starting Jetty");
+        restartJetty();
+
+        //if (Boolean.valueOf(starterProperties.getProperty(JettyStarterProperties.JETTY_ALLOW_RESTART_PROPERTY)).booleanValue())
+        //{
+        //    listenForRestart();
+        //}
+    }
+
+    private void restartJetty()
+    {
+        try
+        {
+            starterProperties = new JettyStarterProperties();
+            log("Printing JettyStarter properties");
+            starterProperties.list(System.out);
+
+            // make sure the log dir exists
+            // get jetty log dir
+            String jettyLogsPath = starterProperties.getProperty(JettyStarterProperties.JETTY_LOGS_PROPERTY);
+            File jettyLogs = new File(jettyLogsPath);
+            if (!jettyLogs.exists())
+            {
+                jettyLogs.mkdirs();
+            }
+
+            String configFiles = starterProperties.getProperty(JettyStarterProperties.JETTY_CONFIG_FILES_PROPERTY);
+            System.out.println("jetty.configfiles property: " + configFiles);
+
+            String[] configFileArgs = configFiles.split("[ ,]");
+            configFileArgs = purgeArray(configFileArgs);
+            String msg = "Starting Jetty from the following configuration files:";
+            for (int i = 0; i < configFileArgs.length; i++)
+            {
+                msg += " " + configFileArgs[i];
+            }
+            System.out.println(msg);
+
+            // Parse each config file.  If the resulting object implements
+            // {@link org.mortbay.component.LifeCycle}, then it is started.
+            XmlConfiguration.main(configFileArgs);
+        }
+        catch (Throwable t)
+        {
+            t.printStackTrace();
+        }
+    }
+
+    /**
+     * Listen for a restart command on a separate port.  This allows the Jetty configuration in
+     * JettyStarter.properties to be modified and take effect without restarting SageTV.
+     */
+    /*
+     * Don't allow restarts for now.  It won't be common anyway, once the user gets the server
+     * running how they want it.  A method for clean shutdown needs to be implemented.
+     * The function probably needs some other fixes, too.
+     */
+    /*private void listenForRestart()
+    {
+        ServerSocket serverSocket = null;
+
+        try
+        {
+            String portString = starterProperties.getProperty(JettyStarterProperties.JETTY_RESTART_PORT_PROPERTY);
+            int port = Integer.parseInt(portString);
+            log(JettyStarterProperties.JETTY_RESTART_PORT_PROPERTY + " = " + port);
+// TODO move inside while loop
+            serverSocket = new ServerSocket(port);
+ 
+            /*if (arguments.get(ARG_BINDADDRESS) != null)
+                hostName = serverSocket.getInetAddress().getHostName();
+            else
+                hostName = InetAddress.getLocalHost().getHostName();*
+
+            while (true)
+            {
+
+                Socket socket = null;
+                BufferedReader reader = null;
+                PrintStream printer = null;
+
+                try
+                {
+                    log("Waiting to accept connection on port " + port);
+                    socket = serverSocket.accept();
+                    log("Connection from " + socket.getInetAddress() + ":" + socket.getPort() + " accepted");
+
+                    reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    printer = new PrintStream(socket.getOutputStream());
+
+                    String s = reader.readLine();
+
+                    log("Command received from client: " + s);
+
+                    log("Restarting Jetty");
+                    restartJetty();
+
+                    printer.println("<h3>Restarting Jetty Server</h3>");
+                    printer.println("<h3>JettyStarter.properties</h3>");
+                    printer.println("<pre>");
+                    starterProperties.list(printer);
+                    printer.println("</pre>");
+                    printer.flush();
+                }
+                finally
+                {
+                    if (printer != null)
+                    {
+                        printer.close();
+                    }
+                    if (reader != null)
+                    {
+                        try
+                        {
+                            reader.close();
+                        }
+                        catch (IOException e)
+                        {
+                        }
+                    }
+                    if (socket != null)
+                    {
+                        try
+                        {
+                            socket.close();
+                        }
+                        catch (IOException e)
+                        {
+                        }
+                    }
+                }
+            }
+        }
+        catch (Throwable e)
+        {
+            log(e.getMessage());
+            e.printStackTrace();
+        }
+        finally
+        {
+            try
+            {
+                serverSocket.close();
+            }
+            catch (IOException e)
+            {
+            }
+        }
+    }*/
+
+    /**
+     * Removes all elements that are null or are an empty string. 
+     * @param array
+     * @return
+     */
+    private static String[] purgeArray(String[] array)
+    {
+        List list = new ArrayList();
+
+        // add valid items to a temporary list
+        for (int i = 0; i < array.length; i++)
+        {
+            if ((array[i] != null))
+            {
+                String item = array[i].trim();
+                if (item.length() > 0)
+                {
+                    list.add(item);
+                }
+            }
+        }
+
+        // convert the list to an array
+        array = (String[]) list.toArray(new String[list.size()]);
+
+        return array;
+    }
+
+
+    /**
+     * Provide standard prefix on log message so sagetv_0.txt can be grepped.
+     * <p>
+     * <code>tail -f sagetv_0.txt | grep JettyStarter</code>
+     * @param msg
+     */
+    private static void log(String msg)
+    {
+        System.out.println("JettyStarter: " + msg);
+    }
+}
