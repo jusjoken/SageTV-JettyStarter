@@ -42,7 +42,7 @@
     <target name="compile" depends="">
     	<!-- compile files in src dir to bin dir -->
     	<mkdir dir="${bin.dir}"/>
-    	<javac srcdir="${src.dir}" destdir="${bin.dir}">
+    	<javac srcdir="${src.dir}" destdir="${bin.dir}" source="1.5" target="1.5">
     	    <classpath>
     	        <fileset dir="${lib.dir}" />
     	    </classpath>
