@@ -32,47 +32,40 @@ public class JettyStarterProperties
 
         // load Jetty starter properties from a file and replace system properties in values
         loadProperties();
-        System.out.println("JettyStarter properties before system property replace");
-        starterProperties.list(System.out);
 
         // make sure to do jetty.home first because other properties may depend on it
         // and properties are not in the order they appear in the file
         String jettyHomeProperty = starterProperties.getProperty(JETTY_HOME_PROPERTY, "jetty");
         jettyHomeProperty = replaceSystemProperties(jettyHomeProperty);
-        starterProperties.setProperty(JETTY_HOME_PROPERTY, jettyHomeProperty);
 
         // get jetty home dir
-        String jettyHomePath = starterProperties.getProperty(JETTY_HOME_PROPERTY);
-        System.out.println("jetty.home property: " + jettyHomePath);
+        String jettyHomePath = jettyHomeProperty;
         File jettyHome = new File(jettyHomePath);
         if (!jettyHome.isAbsolute())
         {
-            System.out.println("jetty.home property is not absolute");
             // if the property was not an absolute path, make it relative to SAGE_HOME
             jettyHome = new File(sageHome, jettyHomePath);
-            System.out.println("jetty.home property: " + jettyHome.getAbsolutePath());
         }
+        starterProperties.setProperty(JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
         // set system property required by Jetty
         System.setProperty(JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
 
         // replace system properties after jetty.home has been set
         replaceSystemProperties(starterProperties);
-        System.out.println("JettyStarter properties after system property replace");
-        starterProperties.list(System.out);
 
         // get jetty log dir
         String jettyLogsPath = starterProperties.getProperty(JETTY_LOGS_PROPERTY, "logs");
-        System.out.println("jetty.logs property: " + jettyLogsPath);
         File jettyLogs = new File(jettyLogsPath);
         if (!jettyLogs.isAbsolute())
         {
             // if the property was not an absolute path, make it relative to JETTY_HOME
-            System.out.println("jetty.logs property is not absolute");
             jettyLogs = new File(jettyHome, jettyLogsPath);
-            System.out.println("jetty.logs property: " + jettyLogs.getAbsolutePath());
         }
         // set system property required by Jetty
         System.setProperty(JETTY_LOGS_PROPERTY, jettyLogs.getAbsolutePath());
+
+        System.out.println("JettyStarter properties");
+        starterProperties.list(System.out);
     }
 
     public String getProperty(String key)
@@ -85,7 +78,6 @@ public class JettyStarterProperties
         {
             return (String) starterProperties.get(key);
         }
-        //return (String) tempMap.get(key);
     }
 
     public void list(PrintStream out)
