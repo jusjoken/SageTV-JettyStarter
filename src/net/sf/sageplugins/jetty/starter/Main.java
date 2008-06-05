@@ -3,6 +3,8 @@ package net.sf.sageplugins.jetty.starter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.mortbay.xml.XmlConfiguration;
 
@@ -32,8 +34,6 @@ public class Main implements Runnable
         try
         {
             starterProperties = new JettyStarterProperties();
-            log("Printing JettyStarter properties");
-            starterProperties.list(System.out);
 
             // make sure the log dir exists
             // get jetty log dir
@@ -44,15 +44,15 @@ public class Main implements Runnable
                 jettyLogs.mkdirs();
             }
 
+            // get jetty config files
             String configFiles = starterProperties.getProperty(JettyStarterProperties.JETTY_CONFIG_FILES_PROPERTY);
-            System.out.println("jetty.configfiles property: " + configFiles);
 
-            String[] configFileArgs = configFiles.split("[ ,]");
-            configFileArgs = purgeArray(configFileArgs);
+            // don't parse on spaces because SageTV is installed in C:\Program Files in Windows
+            String[] configFileArgs = parseConfigFilesSetting(configFiles);
             String msg = "Starting Jetty from the following configuration files:";
             for (int i = 0; i < configFileArgs.length; i++)
             {
-                msg += " " + configFileArgs[i];
+                msg += " '" + configFileArgs[i] + "'";
             }
             System.out.println(msg);
 
@@ -167,6 +167,58 @@ public class Main implements Runnable
             }
         }
     }*/
+
+    /**
+     * 
+     */
+    private static String[] parseConfigFilesSetting(String configFiles)
+    {
+        String UQ = "(?<!\\\\)\\\""; // unescaped quotes
+        Pattern p = Pattern.compile(UQ + ".*?" + UQ);
+        Matcher m = p.matcher(configFiles);
+        List<String> configFileList = new ArrayList<String>();
+        int previousEnd = 0;
+        while (m.find())
+        {
+            if (m.start() > previousEnd)
+            {
+                // there is some text between the previous match and this match
+                // (or before this match if it's the first match)
+                // split it on spaces
+                String textBetweenMatches = configFiles.substring(previousEnd, m.start()).trim();
+                String[] textArray = textBetweenMatches.split(" ");
+                for (String text : textArray)
+                {
+                    if (text.trim().length() > 0)
+                    {
+                        configFileList.add(text);
+                    }
+                }
+            }
+            String matchingText = configFiles.substring(m.start() + 1, m.end() - 1).trim();
+            configFileList.add(matchingText);
+
+            previousEnd = m.end();
+        }
+
+        if (configFiles.length() > previousEnd)
+        {
+            // text after the last match, split it on spaces
+            String tailText = configFiles.substring(previousEnd, configFiles.length()).trim();
+            String[] textArray = tailText.split(" ");
+            for (String text : textArray)
+            {
+                if (text.trim().length() > 0)
+                {
+                    configFileList.add(text);
+                }
+            }
+        }
+
+        String[] configFileArray = new String[configFileList.size()];
+        configFileArray = configFileList.toArray(configFileArray);
+        return configFileArray;
+    }
 
     /**
      * Removes all elements that are null or are an empty string. 
