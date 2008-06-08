@@ -51,9 +51,10 @@
             <Set name="maxIdleTime">30000</Set>
             <Set name="Acceptors">2</Set>
             <Set name="statsOn">false</Set>
-            <Set name="confidentialPort">8443</Set>
-	    <Set name="lowResourcesConnections">5000</Set>
-	    <Set name="lowResourcesMaxIdleTime">5000</Set>
+            <!-- modified for JettyStarter -->
+            <Set name="confidentialPort"><SystemProperty name="jetty.ssl.port" default="8443"/></Set>
+            <Set name="lowResourcesConnections">5000</Set>
+            <Set name="lowResourcesMaxIdleTime">5000</Set>
           </New>
       </Arg>
     </Call>
