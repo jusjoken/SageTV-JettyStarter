@@ -17,6 +17,9 @@ public class JettyStarterProperties
     public static final String JETTY_HOME_PROPERTY = "jetty.home";
     public static final String JETTY_CONFIG_FILES_PROPERTY = "jetty.configfiles";
     public static final String JETTY_LOGS_PROPERTY = "jetty.logs";
+    public static final String JETTY_HOST_PROPERTY = "jetty.host";
+    public static final String JETTY_PORT_PROPERTY = "jetty.port";
+    public static final String JETTY_SSL_PORT_PROPERTY = "jetty.ssl.port";
     //public static final String JETTY_ALLOW_RESTART_PROPERTY = "jetty.restart.allow";
     //public static final String JETTY_RESTART_PORT_PROPERTY = "jetty.restart.port";
     //public static final String JETTY_RESTART_BIND_ADDRESS_PROPERTY = "jetty.restart.bindaddress";
@@ -47,7 +50,7 @@ public class JettyStarterProperties
             jettyHome = new File(sageHome, jettyHomePath);
         }
         starterProperties.setProperty(JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
-        // set system property required by Jetty
+        // set system property required by Jetty and other properties
         System.setProperty(JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
 
         // replace system properties after jetty.home has been set
@@ -61,8 +64,10 @@ public class JettyStarterProperties
             // if the property was not an absolute path, make it relative to JETTY_HOME
             jettyLogs = new File(jettyHome, jettyLogsPath);
         }
-        // set system property required by Jetty
-        System.setProperty(JETTY_LOGS_PROPERTY, jettyLogs.getAbsolutePath());
+        starterProperties.setProperty(JETTY_LOGS_PROPERTY, jettyLogs.getAbsolutePath());
+
+        // set system properties for Jetty
+        setSystemProperties(starterProperties);
 
         System.out.println("JettyStarter properties");
         starterProperties.list(System.out);
@@ -70,14 +75,7 @@ public class JettyStarterProperties
 
     public String getProperty(String key)
     {
-        if (key.equals(JETTY_HOME_PROPERTY))
-        {
-            return System.getProperty(JETTY_HOME_PROPERTY);
-        }
-        else
-        {
-            return (String) starterProperties.get(key);
-        }
+        return (String) starterProperties.get(key);
     }
 
     public void list(PrintStream out)
@@ -165,6 +163,29 @@ public class JettyStarterProperties
         sb.append(value.substring(lastEnd));
 
         return sb.toString();
+    }
+
+    private void setSystemProperties(Properties starterProperties)
+    {
+        // do other properties
+        Enumeration names = starterProperties.propertyNames();
+
+        while (names.hasMoreElements())
+        {
+            String name = (String) names.nextElement();
+            String value = starterProperties.getProperty(name);
+
+            if ((value == null) || (value.trim().length() == 0))
+            {
+                continue;
+            }
+
+            // prevent overwriting of existing values
+            if (System.getProperty(name) == null)
+            {
+                System.setProperty(name, value);
+            }
+        }
     }
 
     public static void main(String[] args)
