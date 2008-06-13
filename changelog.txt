@@ -1,0 +1,12 @@
+1.2 June 12, 2008
+  - Replace third-party compression filter with custom filter.  Fixes issue where the browser
+    displayed binary data for some pages. 
+1.1 June 8, 2008
+  - Remove quotes from jetty.logs setting in JettyStarter.properties
+  - Add jetty.host, jetty.port, and jetty.ssl.port properties to JettyStarter.properties
+1.0.02 June 4, 2008
+  - Support paths with spaces in JettyStarter.properties jetty.configfiles setting
+1.0.01 June 3, 2008
+  - Recompiled for Java 1.5
+1.0 June 1, 2008
+  - First Release
