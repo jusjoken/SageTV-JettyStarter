@@ -10,7 +10,7 @@ class GZIPServletOutputStream extends ServletOutputStream
     // Keep a reference to the raw GZIP stream.  This instance variable
     // is package-private to allow the compression response wrapper access
     // to the variable;
-    GZIPOutputStream internalGzipOS;
+    private GZIPOutputStream internalGzipOS;
 
     GZIPServletOutputStream(ServletOutputStream sos) throws IOException
     {
@@ -33,5 +33,18 @@ class GZIPServletOutputStream extends ServletOutputStream
     public void write(byte[] b) throws IOException
     {
         internalGzipOS.write(b);
+    }
+
+    @Override
+    public void flush() throws IOException
+    {
+        super.flush();
+        internalGzipOS.flush();
+    }
+
+    public void finish() throws IOException
+    {
+        flush();
+        internalGzipOS.finish();
     }
 }

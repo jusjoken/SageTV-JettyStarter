@@ -3,7 +3,6 @@ package net.sf.sageplugins.jetty.filters;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -26,16 +25,6 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
     @Override
     public void setContentLength(int len) { }
 
-    public GZIPOutputStream getGZIPOutputStream()
-    {
-        if (this.servletGzipOS == null)
-        {
-            return null;
-        }
-
-        return this.servletGzipOS.internalGzipOS;
-    }
-
     /**
      * Flushes all buffered data to the client.
      */
@@ -49,12 +38,22 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
         }
         else if (servletGzipOS != null)
         {
-            // wraps both getResponse().getOutputStream()
+            // wraps getResponse().getOutputStream()
             servletGzipOS.flush();
         }
         else
         {
             getResponse().flushBuffer();
+        }
+    }
+
+    public void finish() throws IOException
+    {
+        flushBuffer();
+        // will be null if resource is '304 Not Modified'
+        if (servletGzipOS != null)
+        {
+            servletGzipOS.finish();
         }
     }
 
