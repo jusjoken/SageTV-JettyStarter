@@ -1,7 +1,6 @@
 package net.sf.sageplugins.jetty.filters;
 
 import java.io.IOException;
-import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -54,10 +53,11 @@ public class CompressionFilter implements Filter
             wrappedResponse.setHeader("Transfer-Encoding", "chunked");
 
             chain.doFilter(req, wrappedResponse);
-
-            wrappedResponse.flushBuffer();
-            GZIPOutputStream gzos = wrappedResponse.getGZIPOutputStream();
-            gzos.finish();
+            wrappedResponse.finish();
+        }
+        else
+        {
+            chain.doFilter(req, resp);
         }
     }
 
