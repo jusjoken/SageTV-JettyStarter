@@ -20,6 +20,11 @@ public class JettyStarterProperties
     public static final String JETTY_HOST_PROPERTY = "jetty.host";
     public static final String JETTY_PORT_PROPERTY = "jetty.port";
     public static final String JETTY_SSL_PORT_PROPERTY = "jetty.ssl.port";
+    public static final String JETTY_SSL_KEYSTORE_PROPERTY = "jetty.ssl.keystore";
+    public static final String JETTY_SSL_PASSWORD_PROPERTY = "jetty.ssl.password";
+    public static final String JETTY_SSL_KEYPASSWORD_PROPERTY = "jetty.ssl.keypassword";
+    public static final String JETTY_SSL_TRUSTSTORE_PROPERTY = "jetty.ssl.truststore";
+    public static final String JETTY_SSL_TRUSTPASSWORD_PROPERTY = "jetty.ssl.trustpassword";
     //public static final String JETTY_ALLOW_RESTART_PROPERTY = "jetty.restart.allow";
     //public static final String JETTY_RESTART_PORT_PROPERTY = "jetty.restart.port";
     //public static final String JETTY_RESTART_BIND_ADDRESS_PROPERTY = "jetty.restart.bindaddress";
@@ -65,6 +70,26 @@ public class JettyStarterProperties
             jettyLogs = new File(jettyHome, jettyLogsPath);
         }
         starterProperties.setProperty(JETTY_LOGS_PROPERTY, jettyLogs.getAbsolutePath());
+
+        // get jetty keystore file
+        String jettyKeystorePath = starterProperties.getProperty(JETTY_SSL_KEYSTORE_PROPERTY, "etc/keystore");
+        File jettyKeystore = new File(jettyKeystorePath);
+        if (!jettyKeystore.isAbsolute())
+        {
+            // if the property was not an absolute path, make it relative to JETTY_HOME
+            jettyKeystore = new File(jettyHome, jettyKeystorePath);
+        }
+        starterProperties.setProperty(JETTY_SSL_KEYSTORE_PROPERTY, jettyKeystore.getAbsolutePath());
+
+        // get jetty truststore file
+        String jettyTruststorePath = starterProperties.getProperty(JETTY_SSL_TRUSTSTORE_PROPERTY, "etc/keystore");
+        File jettyTruststore = new File(jettyTruststorePath);
+        if (!jettyTruststore.isAbsolute())
+        {
+            // if the property was not an absolute path, make it relative to JETTY_HOME
+            jettyTruststore = new File(jettyHome, jettyTruststorePath);
+        }
+        starterProperties.setProperty(JETTY_SSL_TRUSTSTORE_PROPERTY, jettyTruststore.getAbsolutePath());
 
         // set system properties for Jetty
         setSystemProperties(starterProperties);
