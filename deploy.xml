@@ -4,13 +4,13 @@
     JettyStarter.properties
     JARs
        jetty-starter.jar
-       jetty-6.1.7.jar
+       jetty-6.1.11.jar
        ant-1.6.5.jar
        core-3.1.1.jar
-       jetty-util.6.1.7.jar
+       jetty-util.6.1.11.jar
        jsp-2.1.jar
        jsp-api-2.1.jar
-       servlet-api-2.5-6.1.7.jar
+       servlet-api-2.5-6.1.11.jar
     jetty
        contexts
        etc
@@ -30,7 +30,7 @@
        webapps
           index.html
   -->
-
+<!-- TODO test, check in, tag with version, update wiki, build, create release, deploy zip file to sourceforge, update Sage forums download page --> 
 <project name="Create JettyStarter zip file" default="makezip" basedir=".">
 	
     <property name="src.dir" value="src"/>
@@ -39,12 +39,18 @@
     <property name="build.dir" value="build"/>
     <property name="dist.dir" value="dist"/>
 
+    <fileset id="lib.fileset" dir="${lib.dir}">
+        <!--exclude name="jetty-6.1.7.jar"/>
+        <exclude name="jetty-util.6.1.7.jar"/>
+        <exclude name="servlet-api-2.5-6.1.7.jar"/-->
+	</fileset>
+
     <target name="compile" depends="">
     	<!-- compile files in src dir to bin dir -->
     	<mkdir dir="${bin.dir}"/>
     	<javac srcdir="${src.dir}" destdir="${bin.dir}" source="1.5" target="1.5">
     	    <classpath>
-    	        <fileset dir="${lib.dir}" />
+                <fileset refid="lib.fileset"/>
     	    </classpath>
     	</javac>
     </target>
@@ -72,7 +78,7 @@
         </copy>
 
     	<copy todir="${build.dir}/JARs">
-            <fileset dir="${lib.dir}"/>
+    	    <fileset refid="lib.fileset"/>
         </copy>
 
     	<zip basedir="${build.dir}" destfile="${dist.dir}/jettystarter.zip">
