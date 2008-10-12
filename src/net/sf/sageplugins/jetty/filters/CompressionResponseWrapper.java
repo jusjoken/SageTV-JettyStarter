@@ -13,6 +13,7 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
     private GZIPServletOutputStream servletGzipOS = null;
     private PrintWriter printWriter = null;
     private Object streamUsed = null;
+    private int status = HttpServletResponse.SC_OK;
 
     public CompressionResponseWrapper(HttpServletResponse resp)
     {
@@ -20,10 +21,29 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
     }
 
     /**
-     * Ignore this method, the output will be compressed.
+     * Ignore this method, the output will be compressed and use chunked transfers.
      */
     @Override
     public void setContentLength(int len) { }
+
+    public int getStatus()
+    {
+        return status;
+    }
+
+    @Override
+    public void setStatus(int sc)
+    {
+        status = sc;
+        super.setStatus(sc);
+    }
+
+    @Override
+    public void setStatus(int sc, String sm)
+    {
+        status = sc;
+        super.setStatus(sc, sm);
+    }
 
     /**
      * Flushes all buffered data to the client.
@@ -69,6 +89,7 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
 
         if (servletGzipOS == null)
         {
+            setCompressionHeaders();
             servletGzipOS = new GZIPServletOutputStream(getResponse().getOutputStream());
             streamUsed = servletGzipOS;
         }
@@ -92,6 +113,7 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
             // and then wrap the compression servlet output stream in two additional output
             // stream decorators: OutputStreamWriter which converts characters into bytes,
             // and the a PrintWriter on top of the OutputStreamWriter object.
+            setCompressionHeaders();
             servletGzipOS = new GZIPServletOutputStream(getResponse().getOutputStream());
 
             OutputStreamWriter osw = new OutputStreamWriter(servletGzipOS,
@@ -102,5 +124,12 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
         }
 
         return printWriter;
+    }
+
+    private void setCompressionHeaders()
+    {
+        setHeader("Content-Encoding", "gzip");
+        setHeader("Vary", "Accept-Encoding");
+        setHeader("Transfer-Encoding", "chunked");
     }
 }
