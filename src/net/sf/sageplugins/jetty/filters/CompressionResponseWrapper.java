@@ -51,14 +51,17 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
     @Override
     public void flushBuffer() throws IOException
     {
+        // in random cases the header values are not preserved, so set them again here
         if (printWriter != null)
         {
             // wraps both servletGzipOS and getResponse().getOutputStream()
+            setCompressionHeaders();
             printWriter.flush();
         }
         else if (servletGzipOS != null)
         {
             // wraps getResponse().getOutputStream()
+            setCompressionHeaders();
             servletGzipOS.flush();
         }
         else
@@ -70,6 +73,7 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
     public void finish() throws IOException
     {
         flushBuffer();
+
         // will be null if resource is '304 Not Modified'
         if (servletGzipOS != null)
         {
@@ -84,7 +88,7 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
         // the servlet has not already accessed the print writer.
         if ((streamUsed != null) && (streamUsed != servletGzipOS))
         {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Cannot request output stream if writer has already been requested");
         }
 
         if (servletGzipOS == null)
@@ -104,7 +108,7 @@ class CompressionResponseWrapper extends HttpServletResponseWrapper
         // not already accessed the servlet output stream.
         if ((streamUsed != null) && (streamUsed != printWriter))
         {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Cannot request writer if output stream has already been requested");
         }
 
         if (printWriter == null)
