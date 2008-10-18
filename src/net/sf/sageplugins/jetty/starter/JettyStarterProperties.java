@@ -4,10 +4,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.mortbay.log.Log;
 
 // TODO resolve properties and detect circular references
 public class JettyStarterProperties
@@ -94,8 +98,11 @@ public class JettyStarterProperties
         // set system properties for Jetty
         setSystemProperties(starterProperties);
 
-        System.out.println("JettyStarter properties");
-        starterProperties.list(System.out);
+        Log.debug("JettyStarter properties");
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        starterProperties.list(pw);
+        Log.debug(pw.toString());
     }
 
     public String getProperty(String key)
@@ -120,7 +127,8 @@ public class JettyStarterProperties
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                Log.info(e.getMessage());
+                Log.ignore(e);
             }
             finally
             {
@@ -132,7 +140,8 @@ public class JettyStarterProperties
                     }
                     catch (IOException e)
                     {
-                        e.printStackTrace();
+                        Log.info(e.getMessage());
+                        Log.ignore(e);
                     }
                 }
             }

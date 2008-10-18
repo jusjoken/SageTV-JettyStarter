@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mortbay.xml.XmlConfiguration;
+import org.mortbay.log.Log;
 
 // TODO listen on a port for restart - look at 'Jetty start' source code
 public class Main implements Runnable
@@ -20,7 +20,7 @@ public class Main implements Runnable
     {
         Thread.currentThread().setName("Jetty Starter");
 
-        log("Starting Jetty");
+        Log.info("Starting Jetty");
         restartJetty();
 
         //if (Boolean.valueOf(starterProperties.getProperty(JettyStarterProperties.JETTY_ALLOW_RESTART_PROPERTY)).booleanValue())
@@ -54,21 +54,21 @@ public class Main implements Runnable
             {
                 msg += " '" + configFileArgs[i] + "'";
             }
-            System.out.println(msg);
+            Log.debug(msg);
 
-            // Parse each config file.  If the resulting object implements
-            // {@link org.mortbay.component.LifeCycle}, then it is started.
-            XmlConfiguration.main(configFileArgs);
+            JettyInstance.getInstance().configure(configFileArgs);
+            JettyInstance.getInstance().start();
         }
         catch (Throwable t)
         {
-            t.printStackTrace();
+            Log.info(t.getMessage());
+            Log.ignore(t);
         }
     }
 
     /**
      * Listen for a restart command on a separate port.  This allows the Jetty configuration in
-     * JettyStarter.properties to be modified and take effect without restarting SageTV.
+     * JettyInstance.properties to be modified and take effect without restarting SageTV.
      */
     /*
      * Don't allow restarts for now.  It won't be common anyway, once the user gets the server
@@ -218,45 +218,5 @@ public class Main implements Runnable
         String[] configFileArray = new String[configFileList.size()];
         configFileArray = configFileList.toArray(configFileArray);
         return configFileArray;
-    }
-
-    /**
-     * Removes all elements that are null or are an empty string. 
-     * @param array
-     * @return
-     */
-    private static String[] purgeArray(String[] array)
-    {
-        List list = new ArrayList();
-
-        // add valid items to a temporary list
-        for (int i = 0; i < array.length; i++)
-        {
-            if ((array[i] != null))
-            {
-                String item = array[i].trim();
-                if (item.length() > 0)
-                {
-                    list.add(item);
-                }
-            }
-        }
-
-        // convert the list to an array
-        array = (String[]) list.toArray(new String[list.size()]);
-
-        return array;
-    }
-
-
-    /**
-     * Provide standard prefix on log message so sagetv_0.txt can be grepped.
-     * <p>
-     * <code>tail -f sagetv_0.txt | grep JettyStarter</code>
-     * @param msg
-     */
-    private static void log(String msg)
-    {
-        System.out.println("JettyStarter: " + msg);
     }
 }
