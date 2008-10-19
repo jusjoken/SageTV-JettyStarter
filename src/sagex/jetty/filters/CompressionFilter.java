@@ -1,4 +1,4 @@
-package net.sf.sageplugins.jetty.filters;
+package sagex.jetty.filters;
 
 import java.io.IOException;
 

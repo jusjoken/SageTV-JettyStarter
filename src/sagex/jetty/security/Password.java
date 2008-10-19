@@ -1,4 +1,4 @@
-package net.sf.sageplugins.jetty.security;
+package sagex.jetty.security;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

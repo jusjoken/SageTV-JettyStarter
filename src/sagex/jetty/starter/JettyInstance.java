@@ -1,4 +1,4 @@
-package net.sf.sageplugins.jetty.starter;
+package sagex.jetty.starter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
