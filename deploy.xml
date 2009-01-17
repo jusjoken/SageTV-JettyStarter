@@ -30,7 +30,7 @@
        webapps
           index.html
   -->
-<!-- TODO test, check in, tag with version, update wiki, build, create release, deploy zip file to sourceforge, update Sage forums download page --> 
+<!-- TODO update Version.java, test, check in, tag with version, update wiki, build, create release, deploy zip file to sourceforge, update Sage forums download page and thread page --> 
 <project name="Create JettyStarter zip file" default="makezip" basedir=".">
 	
     <property name="src.dir" value="src"/>
@@ -80,6 +80,13 @@
     	<copy todir="${build.dir}/JARs">
     	    <fileset refid="lib.fileset"/>
         </copy>
+
+        <fixcrlf srcdir="${build.dir}" eol="dos">
+            <include name="**/*.txt"/>
+            <include name="**/*.xml"/>
+            <include name="**/*.conf"/>
+            <include name="**/*.properties"/>
+        </fixcrlf>
 
     	<zip basedir="${build.dir}" destfile="${dist.dir}/jettystarter.zip">
         </zip>
