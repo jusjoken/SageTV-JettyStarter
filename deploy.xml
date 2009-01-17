@@ -27,6 +27,7 @@
           webdefault.xml
        lib
        logs
+       static
        webapps
           index.html
   -->
