@@ -20,6 +20,7 @@ public class Main implements Runnable
     {
         Thread.currentThread().setName("Jetty Starter");
 
+        Log.info("Jetty Starter plugin version " + Version.CURRENT_VERSION);
         Log.info("Starting Jetty");
         restartJetty();
 
