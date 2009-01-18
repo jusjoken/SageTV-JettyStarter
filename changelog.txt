@@ -1,3 +1,10 @@
+1.5 January 17, 2009
+  - Serve static files from the jetty/static directory.  Required for the crossdomain.xml file for
+    shadeblue's remote control.
+  - Convert end-of-line characters from LF (Linux) to CRLF (Windows).  Most people use the Windows
+    platform plus Linux editors handle the Windows format better than Windows Notepad handles the
+    Linux format.
+  - Expose version number
 1.4 October 18, 2008
   - Change package names from net.sf.sageplugins.* to sagex.*
   - Provide access to Jetty configuration objects.  Provides APIs for web applications to find
