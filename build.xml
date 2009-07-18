@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="SageTV Mobile Web Interface" default="dist">
+
+   <property file="build.properties"/>
+
+   <property name="src.dir"   location="src"/>
+   <property name="build.dir" location="build"/>
+   <property name="dist.dir"  location="dist"/>
+
+   <condition property="sage.lib.dir" value="/usr/local/lib/sagetv" else="C:/sagelibs">
+      <os family="unix" />
+   </condition>
+   <property name="jetty.lib.dir" location="lib"/>
+
+   <path id="lib.classpath.id">
+      <fileset id="lib.fileset.id" dir="${jetty.lib.dir}" includes="*.jar"/>
+   </path>
+
+   <!--
+      - The target that Hudson calls when launching this build.  It has steps specific
+      - to building from Hudson as opposed to building from the Eclipse development
+      - environment or the command line.
+     -->
+   <target name="hudson">
+      <echo message="Building from Hudson..."/>
+      <!-- use the checked-in properties file -->
+      <copy file="build.properties.template" tofile="build.properties" overwrite="yes" failonerror="no"/>
+      <!-- get environment variables to see if HUDSON_HOME is being used to override the location -->
+      <property environment="env"/>
+      <condition property="hudson.home.dir" value="${env.HUDSON_HOME}" else="${user.home}/.hudson">
+         <isset property="env.HUDSON_HOME"/>
+      </condition>
+      <echo message="Hudson home directory ${hudson.home.dir}"/>
+      <!-- call the default target of this file -->
+      <ant antfile="build.xml" inheritall="false">
+         <!-- The jar with the SageTV APIs is placed in the Hudson home directory -->
+         <property name="sage.lib.dir" value="${hudson.home.dir}"/>
+      </ant>
+   </target>
+
+   <target name="init" depends="clean">
+      <tstamp/>
+
+      <echo message="SageTV library location: ${sage.lib.dir}"/>
+      <echo message="Jetty library location: ${jetty.lib.dir}"/>
+
+      <mkdir dir="${build.dir}"/>
+      <mkdir dir="${build.dir}/jar"/>
+      <mkdir dir="${build.dir}/zip/"/>
+      <mkdir dir="${build.dir}/zip/JARs"/>
+      <mkdir dir="${build.dir}/zip/jetty"/>
+      <mkdir dir="${dist.dir}"/>
+   </target>
+
+   <target name="compile" depends="init">
+      <javac source="1.5"
+             target="1.5"
+             debug="true"
+             debuglevel="lines,vars,source"
+             srcdir="${src.dir}"
+             destdir="${build.dir}/jar"
+      >
+         <classpath>
+            <path location="${sage.lib.dir}/Sage.jar"/>
+            <path refid="lib.classpath.id"/>
+         </classpath>
+      </javac>
+   </target>
+
+   <target name="jar" depends="compile">
+      <jar destfile="${build.dir}/zip/JARs/jetty-starter.jar">
+          <fileset dir="${build.dir}/jar"/>
+      </jar>
+   </target>
+
+   <target name="dist" depends="jar">
+
+       <copy file="JettyStarter.properties" todir="${build.dir}/zip">
+       </copy>
+
+       <copy todir="${build.dir}/zip/jetty">
+           <fileset dir="jetty"/>
+       </copy>
+
+       <copy todir="${build.dir}/zip/JARs">
+           <fileset refid="lib.fileset.id"/>
+       </copy>
+
+       <fixcrlf srcdir="${build.dir}/zip" eol="dos">
+           <include name="**/*.txt"/>
+           <include name="**/*.xml"/>
+           <include name="**/*.conf"/>
+           <include name="**/*.properties"/>
+       </fixcrlf>
+
+       <zip basedir="${build.dir}/zip" destfile="${dist.dir}/jetty-starter.zip">
+       </zip>
+
+   </target>
+
+   <target name="clean">
+      <delete dir="${build.dir}"/>
+      <delete dir="${dist.dir}"/>
+   </target>
+
+</project>
