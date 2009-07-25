@@ -13,6 +13,10 @@
    </condition>
    <property name="jetty.lib.dir" location="lib"/>
 
+   <condition property="filename.suffix" value="-${build.number}" else="">
+      <isset property="build.number"/>
+   </condition>
+
    <path id="lib.classpath.id">
       <fileset id="lib.fileset.id" dir="${jetty.lib.dir}" includes="*.jar"/>
    </path>
@@ -36,6 +40,7 @@
       <ant antfile="build.xml" inheritall="false">
          <!-- The jar with the SageTV APIs is placed in the Hudson home directory -->
          <property name="sage.lib.dir" value="${hudson.home.dir}"/>
+         <property name="build.number" value="${env.BUILD_NUMBER}"/>
       </ant>
    </target>
 
@@ -94,7 +99,7 @@
            <include name="**/*.properties"/>
        </fixcrlf>
 
-       <zip basedir="${build.dir}/zip" destfile="${dist.dir}/jetty-starter.zip">
+       <zip basedir="${build.dir}/zip" destfile="${dist.dir}/jetty-starter${filename.suffix}.zip">
        </zip>
 
    </target>
