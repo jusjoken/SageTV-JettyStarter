@@ -91,12 +91,35 @@
     <!-- =========================================================== -->
     <!-- Set handler Collection Structure                            --> 
     <!-- =========================================================== -->
+    <New id="RewriteHandler" class="org.mortbay.jetty.handler.rewrite.RewriteHandler">
+      <Set name="rewriteRequestURI">true</Set>
+      <Set name="rewritePathInfo">true</Set>
+      <Set name="originalPathAttribute">requestedPath</Set>
+      <Set name="rules">
+        <Array type="org.mortbay.jetty.handler.rewrite.Rule">
+          <Item>
+            <!-- maintain backward compatibility for nielm's webserver
+                 when running in Jetty
+              -->
+            <New class="org.mortbay.jetty.handler.rewrite.RewritePatternRule">
+              <Set name="pattern">/sagepublic/*</Set>
+              <Set name="replacement">/sage/public</Set>
+            </New>
+          </Item>
+        </Array>
+      </Set>
+    </New>
+
     <Set name="handler">
       <New id="Handlers" class="org.mortbay.jetty.handler.HandlerCollection">
         <Set name="handlers">
           <Array type="org.mortbay.jetty.Handler">
             <Item>
-              <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
+              <Ref id="RewriteHandler">
+                <Set name="handler">
+                  <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
+                </Set>
+              </Ref>
             </Item>
             <Item>
               <New class="org.mortbay.jetty.handler.ContextHandler">
