@@ -94,30 +94,37 @@
     <Set name="handler">
       <New id="Handlers" class="org.mortbay.jetty.handler.HandlerCollection">
         <Set name="handlers">
-         <Array type="org.mortbay.jetty.Handler">
-           <Item>
-             <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
-           </Item>
-           <Item>
-             <New class="org.mortbay.jetty.handler.ContextHandler">
-               <Set name="contextPath">/</Set>
-               <Set name="resourceBase"><SystemProperty name="jetty.home" default="."/>/static</Set>
-               <Call name="addHandler">
-                 <Arg>
-                   <New class="org.mortbay.jetty.handler.ResourceHandler"/>
-                 </Arg>
-               </Call>
-             </New>
-           </Item>
-           <Item>
-             <New id="DefaultHandler" class="org.mortbay.jetty.handler.DefaultHandler">
-               <Set name="serveIcon">false</Set>
-             </New>
-           </Item>
-           <Item>
-             <New id="RequestLog" class="org.mortbay.jetty.handler.RequestLogHandler"/>
-           </Item>
-         </Array>
+          <Array type="org.mortbay.jetty.Handler">
+            <Item>
+              <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
+            </Item>
+            <Item>
+              <New class="org.mortbay.jetty.handler.ContextHandler">
+                <Set name="mimeTypes">
+                  <New id="mimeTypes" class="sagex.jetty.content.MimeTypes"/>
+                </Set>
+                <Set name="contextPath">/</Set>
+                <Set name="resourceBase"><SystemProperty name="jetty.home" default="."/>/static</Set>
+                <Call name="addHandler">
+                  <Arg>
+                    <New class="org.mortbay.jetty.handler.ResourceHandler">
+                      <Set name="mimeTypes">
+                        <Ref id="mimeTypes"/>
+                      </Set>
+                    </New>
+                  </Arg>
+                </Call>
+              </New>
+            </Item>
+            <Item>
+              <New id="DefaultHandler" class="org.mortbay.jetty.handler.DefaultHandler">
+                <Set name="serveIcon">false</Set>
+              </New>
+            </Item>
+            <Item>
+              <New id="RequestLog" class="org.mortbay.jetty.handler.RequestLogHandler"/>
+            </Item>
+          </Array>
         </Set>
       </New>
     </Set>
