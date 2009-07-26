@@ -10,8 +10,9 @@ public enum Version
     VERSION_1_3        ("1.3"),
     VERSION_1_4        ("1.4"),
     VERSION_1_5        ("1.5"),
+    VERSION_1_6        ("1.6"),
 
-    CURRENT_VERSION    (VERSION_1_5.version);
+    CURRENT_VERSION    (VERSION_1_6.version);
     
     private String version = null;
 
