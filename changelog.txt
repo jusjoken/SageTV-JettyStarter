@@ -1,3 +1,8 @@
+1.6 July 26, 2009
+  - Upgrade Jetty from 6.1.11 to 6.1.19
+  - Support user-specified mime types
+  - Rewrite /sagepublic to /sage/public
+  - Deliver jetty-ajp.xml and jetty-ajp.jar for Apache integration (unsupported)
 1.5 January 17, 2009
   - Serve static files from the jetty/static directory.  Required for the crossdomain.xml file for
     shadeblue's remote control.
