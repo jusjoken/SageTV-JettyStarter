@@ -132,6 +132,16 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
         // use the sage home for relative paths
         File sageHome = new File(System.getProperty("user.dir"));
 
+        // the user override location
+        File userMimeTypesFile = new File(sageHome, "jetty/user/mime.types");
+        File defaultMimeTypesFile = new File(sageHome, "jetty/etc/mime.types");
+
+        if (userMimeTypesFile.exists())
+        {
+            mimeTypesFiles.add(userMimeTypesFile);
+        }
+
+        // override by the web application
         File overrideMimeTypesFile = null;
 
         if (getLocation() != null)
@@ -155,15 +165,7 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
             }
         }
 
-        // the user override location
-        File userMimeTypesFile = new File(sageHome, "jetty/user/mime.types");
-        File defaultMimeTypesFile = new File(sageHome, "jetty/etc/mime.types");
-
-        if (userMimeTypesFile.exists())
-        {
-            mimeTypesFiles.add(userMimeTypesFile);
-        }
-
+        // the plugin's defaults location, overrides Jetty's defaults
         if (defaultMimeTypesFile.exists())
         {
             mimeTypesFiles.add(defaultMimeTypesFile);
