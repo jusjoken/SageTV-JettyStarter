@@ -6,12 +6,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mortbay.log.Log;
+
+import sage.SageTV;
 
 // TODO resolve properties and detect circular references
 public class JettyStarterProperties
@@ -40,7 +43,37 @@ public class JettyStarterProperties
     {
         // get sage home dir
         File sageHome = new File(System.getProperty("user.dir"));
-        jettyPropertiesFile = new File(sageHome, "JettyStarter.properties");
+        try
+        {
+            String  remoteUIType  = (String)  SageTV.api("GetRemoteUIType", null);
+            String  uiContextName = (String)  SageTV.api("GetUIContextName", null);
+            Boolean isClient      = (Boolean) SageTV.api("IsClient", null);
+            Boolean isDesktopUI   = (Boolean) SageTV.api("IsDesktopUI", null);
+            Boolean isRemoteUI    = (Boolean) SageTV.api("IsRemoteUI", null);
+            Boolean isServerUI    = (Boolean) SageTV.api("IsServerUI", null);
+            
+            Log.debug("remoteUIType = " + remoteUIType);
+            Log.debug("uiContextName = " + uiContextName);
+            Log.debug("isClient = " + isClient);
+            Log.debug("isDesktopUI = " + isDesktopUI);
+            Log.debug("isRemoteUI = " + isRemoteUI);
+            Log.debug("isServerUI = " + isServerUI);
+            
+            if ((Boolean) SageTV.api("IsClient", null))
+            {
+                jettyPropertiesFile = new File(sageHome, "JettyStarterClient.properties");
+            }
+            else
+            {
+                jettyPropertiesFile = new File(sageHome, "JettyStarter.properties");
+            }
+        }
+        catch (InvocationTargetException e)
+        {
+            Log.ignore(e);
+            jettyPropertiesFile = new File(sageHome, "JettyStarter.properties");
+        }
+        Log.info("Loading JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
 
         // load Jetty starter properties from a file and replace system properties in values
         loadProperties();

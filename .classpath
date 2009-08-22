@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="lib/servlet-api-2.5-6.1.19.jar"/>
 	<classpathentry kind="lib" path="lib/jsp-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/jsp-api-2.1.jar"/>
+	<classpathentry kind="var" path="SAGE_JAR"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
