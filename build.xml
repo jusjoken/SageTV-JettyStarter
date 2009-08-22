@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="SageTV Mobile Web Interface" default="dist">
+<project name="SageTV JettyStarter plugin" default="dist">
 
    <property file="build.properties"/>
 
