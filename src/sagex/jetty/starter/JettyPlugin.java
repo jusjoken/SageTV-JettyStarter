@@ -42,7 +42,7 @@ public class JettyPlugin extends AbstractPlugin
         // Handle all logging for Jetty and Jetty Starter
         JettyStarterLogger.init();
 
-        Log.info("Jetty Starter plugin version " + JettyPlugin.class.getPackage().getImplementationVersion());//Version.CURRENT_VERSION);
+        Log.info("Jetty Starter plugin version " + JettyPlugin.class.getPackage().getImplementationVersion());
     }
     
     public JettyPlugin(SageTVPluginRegistry registry)

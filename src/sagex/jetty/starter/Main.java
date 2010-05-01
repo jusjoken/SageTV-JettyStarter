@@ -12,7 +12,7 @@ public class Main implements Runnable
         // Handle all logging for Jetty and Jetty Starter
         JettyStarterLogger.init();
 
-        Log.info("Jetty Starter plugin version " + Main.class.getPackage().getImplementationVersion());//Version.CURRENT_VERSION);
+        Log.info("Jetty Starter plugin version " + Main.class.getPackage().getImplementationVersion());
     }
     
     /**
