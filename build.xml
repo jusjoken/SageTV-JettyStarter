@@ -182,7 +182,7 @@
          <replacefilter token="@@plugin-version@@"            value="${plugin.version}"/>
       </replace>
 
-      <zip basedir="${build.dir}/packages" destfile="${dist.dir}/jetty-starter-plugin-${plugin.version}.zip">
+      <zip basedir="${build.dir}/packages" destfile="${dist.dir}/jetty-starter-plugin-${implementation.version}.zip">
          <include name="*.zip"/>
          <include name="*.xml"/>
       </zip>
