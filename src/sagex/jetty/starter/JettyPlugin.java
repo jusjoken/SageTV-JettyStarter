@@ -26,11 +26,16 @@ public class JettyPlugin extends AbstractPlugin
     public static final String PROP_NAME_HTTP_PORT  = "jetty/" + JettyProperties.JETTY_PORT_PROPERTY;
     public static final String PROP_NAME_SSL_ENABLE = "jetty/ssl.enable";
     public static final String PROP_NAME_HTTPS_PORT = "jetty/" + JettyProperties.JETTY_SSL_PORT_PROPERTY;
+    public static final String PROP_NAME_LOG_LEVEL  = "jetty/" + JettyProperties.JETTY_LOG_LEVEL;
     // TODO more PROP_NAMEs
     
     public static final String UPNP_CHOICE_MANUAL_CONFIGURATION = "Manual Configuration";
     public static final String UPNP_CHOICE_AUTO_CONFIGURATION   = "Automatic Configuration";
-//    private boolean restartNeeded = false;// *property name
+
+    public static final String LOGLEVEL_CHOICE_INFO    = "INFO";
+    public static final String LOGLEVEL_CHOICE_DEBUG   = "DEBUG";
+    public static final String LOGLEVEL_CHOICE_VERBOSE = "VERBOSE";
+    //    private boolean restartNeeded = false;// *property name
 
     static
     {
@@ -114,6 +119,12 @@ public class JettyPlugin extends AbstractPlugin
 //                    "Internet Connection",
 //                    "Choose whether to automatically or manually configure your router/firewall to allow access to SageTV's web server from outside your home network.")
 //                    .setVisibility(new UPnPVisibility()).setPersistence(new UPnPPersistence());
+        addProperty(SageTVPlugin.CONFIG_CHOICE,
+                    PROP_NAME_LOG_LEVEL,
+                    LOGLEVEL_CHOICE_INFO,
+                    "Log Level",
+                    "Choose the level of detail for Jetty messages written to SageTV's log file.",
+                    new String[] {LOGLEVEL_CHOICE_INFO, LOGLEVEL_CHOICE_DEBUG, LOGLEVEL_CHOICE_VERBOSE});
     }
 
     /**
