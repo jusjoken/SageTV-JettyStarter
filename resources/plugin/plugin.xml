@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SageTVPlugin>
+  <Name>Jetty Web Server</Name>
+  <Identifier>Jetty</Identifier>
+  <Description>An embedded Java web server that runs web applications in SageTV.</Description>
+  <Author>jreichen</Author>
+  <CreationDate>2008.06.01</CreationDate>
+  <ModificationDate>@@last-modified@@</ModificationDate>
+  <Version beta="true">@@plugin-version@@</Version>
+  <Desktop>false</Desktop>
+  <ResourcePath>jetty</ResourcePath>
+  <Webpage>http://tools.assembla.com/sageplugins/wiki/Jetty</Webpage>
+  <Dependency>
+    <Core></Core>
+    <MinVersion>7.0.7</MinVersion>
+  </Dependency>
+  <Dependency>
+    <Plugin>sagex-api</Plugin>
+    <MinVersion>7.0.7.0</MinVersion>
+  </Dependency>
+  <PluginType>Standard</PluginType>
+  <Package>
+    <PackageType>JAR</PackageType>
+    <Location>http://download.sage.tv/plugins/jreichen/jetty/jetty-starter-jars-@@plugin-version@@.zip</Location>
+    <MD5>@@jar-checksum@@</MD5>
+  </Package>
+  <Package>
+    <PackageType>System</PackageType>
+    <Location>http://download.sage.tv/plugins/jreichen/jetty/jetty-starter-config-files-@@plugin-version@@.zip</Location>
+    <MD5>@@config-file-checksum@@</MD5>
+  </Package>
+  <Package>
+    <PackageType>System</PackageType>
+    <Location>http://download.sage.tv/plugins/jreichen/jetty/jetty-starter-user-config-files-@@plugin-version@@.zip</Location>
+    <MD5>@@user-config-file-checksum@@</MD5>
+    <Overwrite>false</Overwrite>
+  </Package>
+  <ImplementationClass>sagex.jetty.starter.JettyPlugin</ImplementationClass>
+</SageTVPlugin>

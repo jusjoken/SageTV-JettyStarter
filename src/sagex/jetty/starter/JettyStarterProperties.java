@@ -3,10 +3,6 @@ package sagex.jetty.starter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -14,141 +10,110 @@ import java.util.regex.Pattern;
 
 import org.mortbay.log.Log;
 
-import sage.SageTV;
+import sagex.jetty.properties.JettyProperties;
 
 // TODO resolve properties and detect circular references
 public class JettyStarterProperties
 {
     // in JettyStarter.properties, system properties are enclosed in $()
     private static final Pattern SYSTEM_PROPERTY_PATTERN = Pattern.compile("\\$\\(.*?\\)");
-    public static final String JETTY_HOME_PROPERTY = "jetty.home";
-    public static final String JETTY_CONFIG_FILES_PROPERTY = "jetty.configfiles";
-    public static final String JETTY_LOGS_PROPERTY = "jetty.logs";
-    public static final String JETTY_HOST_PROPERTY = "jetty.host";
-    public static final String JETTY_PORT_PROPERTY = "jetty.port";
-    public static final String JETTY_SSL_PORT_PROPERTY = "jetty.ssl.port";
-    public static final String JETTY_SSL_KEYSTORE_PROPERTY = "jetty.ssl.keystore";
-    public static final String JETTY_SSL_PASSWORD_PROPERTY = "jetty.ssl.password";
-    public static final String JETTY_SSL_KEYPASSWORD_PROPERTY = "jetty.ssl.keypassword";
-    public static final String JETTY_SSL_TRUSTSTORE_PROPERTY = "jetty.ssl.truststore";
-    public static final String JETTY_SSL_TRUSTPASSWORD_PROPERTY = "jetty.ssl.trustpassword";
-    //public static final String JETTY_ALLOW_RESTART_PROPERTY = "jetty.restart.allow";
-    //public static final String JETTY_RESTART_PORT_PROPERTY = "jetty.restart.port";
-    //public static final String JETTY_RESTART_BIND_ADDRESS_PROPERTY = "jetty.restart.bindaddress";
 
     private File jettyPropertiesFile = null;
-    private Properties starterProperties = new Properties();
+    private Properties starterProperties = null;
 
     public JettyStarterProperties()
     {
-        // get sage home dir
-        File sageHome = new File(System.getProperty("user.dir"));
-        try
-        {
-            String  remoteUIType  = (String)  SageTV.api("GetRemoteUIType", null);
-            String  uiContextName = (String)  SageTV.api("GetUIContextName", null);
-            Boolean isClient      = (Boolean) SageTV.api("IsClient", null);
-            Boolean isDesktopUI   = (Boolean) SageTV.api("IsDesktopUI", null);
-            Boolean isRemoteUI    = (Boolean) SageTV.api("IsRemoteUI", null);
-            Boolean isServerUI    = (Boolean) SageTV.api("IsServerUI", null);
-            
-            Log.debug("remoteUIType = " + remoteUIType);
-            Log.debug("uiContextName = " + uiContextName);
-            Log.debug("isClient = " + isClient);
-            Log.debug("isDesktopUI = " + isDesktopUI);
-            Log.debug("isRemoteUI = " + isRemoteUI);
-            Log.debug("isServerUI = " + isServerUI);
-            
-            if ((Boolean) SageTV.api("IsClient", null))
-            {
-                jettyPropertiesFile = new File(sageHome, "JettyStarterClient.properties");
-            }
-            else
-            {
-                jettyPropertiesFile = new File(sageHome, "JettyStarter.properties");
-            }
-        }
-        catch (InvocationTargetException e)
-        {
-            Log.ignore(e);
-            jettyPropertiesFile = new File(sageHome, "JettyStarter.properties");
-        }
-        Log.info("Loading JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
-
-        // load Jetty starter properties from a file and replace system properties in values
-        loadProperties();
-
-        // make sure to do jetty.home first because other properties may depend on it
-        // and properties are not in the order they appear in the file
-        String jettyHomeProperty = starterProperties.getProperty(JETTY_HOME_PROPERTY, "jetty");
-        jettyHomeProperty = replaceSystemProperties(jettyHomeProperty);
-
-        // get jetty home dir
-        String jettyHomePath = jettyHomeProperty;
-        File jettyHome = new File(jettyHomePath);
-        if (!jettyHome.isAbsolute())
-        {
-            // if the property was not an absolute path, make it relative to SAGE_HOME
-            jettyHome = new File(sageHome, jettyHomePath);
-        }
-        starterProperties.setProperty(JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
-        // set system property required by Jetty and other properties
-        System.setProperty(JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
-
-        // replace system properties after jetty.home has been set
-        replaceSystemProperties(starterProperties);
-
-        // get jetty log dir
-        String jettyLogsPath = starterProperties.getProperty(JETTY_LOGS_PROPERTY, "logs");
-        File jettyLogs = new File(jettyLogsPath);
-        if (!jettyLogs.isAbsolute())
-        {
-            // if the property was not an absolute path, make it relative to JETTY_HOME
-            jettyLogs = new File(jettyHome, jettyLogsPath);
-        }
-        starterProperties.setProperty(JETTY_LOGS_PROPERTY, jettyLogs.getAbsolutePath());
-
-        // get jetty keystore file
-        String jettyKeystorePath = starterProperties.getProperty(JETTY_SSL_KEYSTORE_PROPERTY, "etc/keystore");
-        File jettyKeystore = new File(jettyKeystorePath);
-        if (!jettyKeystore.isAbsolute())
-        {
-            // if the property was not an absolute path, make it relative to JETTY_HOME
-            jettyKeystore = new File(jettyHome, jettyKeystorePath);
-        }
-        starterProperties.setProperty(JETTY_SSL_KEYSTORE_PROPERTY, jettyKeystore.getAbsolutePath());
-
-        // get jetty truststore file
-        String jettyTruststorePath = starterProperties.getProperty(JETTY_SSL_TRUSTSTORE_PROPERTY, "etc/keystore");
-        File jettyTruststore = new File(jettyTruststorePath);
-        if (!jettyTruststore.isAbsolute())
-        {
-            // if the property was not an absolute path, make it relative to JETTY_HOME
-            jettyTruststore = new File(jettyHome, jettyTruststorePath);
-        }
-        starterProperties.setProperty(JETTY_SSL_TRUSTSTORE_PROPERTY, jettyTruststore.getAbsolutePath());
-
-        // set system properties for Jetty
-        setSystemProperties(starterProperties);
-
-        Log.debug("JettyStarter properties");
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        starterProperties.list(pw);
-        Log.debug(pw.toString());
     }
 
+    private static File getSageHomeDir()
+    {
+        // get sage home dir
+        return new File(System.getProperty("user.dir"));
+    }
+    
+    public static File getPropertiesFile()
+    {
+        return new File(getSageHomeDir(), "JettyStarter.properties");
+    }
+
+    /**
+     * Ensure a path is an absolute path
+     * @param relativeTo if path is relative, it's appended to this parameter to create an absolute path
+     * @param path path specified by the user or a default from a properties file
+     * @return The path parameter if it is an absolute path, otherwise path appended to relativeTo
+     */
+    private File resolvePath(File relativeTo, String path)
+    {
+        File file = new File(path);
+        if (!file.isAbsolute())
+        {
+            // if the property was not an absolute path, make it relative to the relativeTo parameter
+            file = new File(relativeTo, path);
+        }
+        return file;
+    }
+
+    public Properties getProperties()
+    {
+        if (starterProperties == null)
+        {
+            loadProperties();
+        }
+        return starterProperties;
+    }
+    
     public String getProperty(String key)
     {
-        return (String) starterProperties.get(key);
-    }
-
-    public void list(PrintStream out)
-    {
-        starterProperties.list(out);
+        return (String) getProperties().get(key);
     }
 
     private void loadProperties()
+    {
+        starterProperties = new Properties();
+
+        // load Jetty starter properties from a file
+        jettyPropertiesFile = getPropertiesFile();
+        loadPropertiesFromFile();
+
+        // make sure to do jetty.home first because other properties may depend on it
+        // and properties are not in the order they appear in the file
+        String jettyHomeProperty = starterProperties.getProperty(JettyProperties.JETTY_HOME_PROPERTY, "jetty");
+        jettyHomeProperty = evaluateProperties(jettyHomeProperty);
+
+        // get jetty home dir
+        String jettyHomePath = jettyHomeProperty;
+        File jettyHome = resolvePath(getSageHomeDir(), jettyHomePath);
+        starterProperties.setProperty(JettyProperties.JETTY_HOME_PROPERTY, jettyHome.getAbsolutePath());
+
+        // replace properties after jetty.home has been set
+        replaceProperties(starterProperties);
+
+        // get jetty log dir
+        String jettyLogsPath = starterProperties.getProperty(JettyProperties.JETTY_LOGS_PROPERTY, "logs");
+        File jettyLogs = resolvePath(jettyHome, jettyLogsPath);
+        starterProperties.setProperty(JettyProperties.JETTY_LOGS_PROPERTY, jettyLogs.getAbsolutePath());
+
+        // get jetty keystore file
+        String jettyKeystorePath = starterProperties.getProperty(JettyProperties.JETTY_SSL_KEYSTORE_PROPERTY, null);
+        if (jettyKeystorePath != null)
+        {
+            File jettyKeystore = resolvePath(jettyHome, jettyKeystorePath);
+            starterProperties.setProperty(JettyProperties.JETTY_SSL_KEYSTORE_PROPERTY, jettyKeystore.getAbsolutePath());
+        }
+
+        // get jetty truststore file
+        String jettyTruststorePath = starterProperties.getProperty(JettyProperties.JETTY_SSL_TRUSTSTORE_PROPERTY, null);
+        if (jettyTruststorePath != null)
+        {
+            File jettyTruststore = resolvePath(jettyHome, jettyTruststorePath);
+            starterProperties.setProperty(JettyProperties.JETTY_SSL_TRUSTSTORE_PROPERTY, jettyTruststore.getAbsolutePath());
+        }
+    }
+    
+    /**
+     * Logging will not be configured by now if the logger is trying to get the log level property
+     */
+    private void loadPropertiesFromFile()
     {
         if (jettyPropertiesFile.exists())
         {
@@ -157,9 +122,11 @@ public class JettyStarterProperties
             {
                 fis = new FileInputStream(jettyPropertiesFile);
                 starterProperties.load(fis);
+                Log.info("Loaded JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
             }
             catch (IOException e)
             {
+                Log.info("Unable to load JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
                 Log.info(e.getMessage());
                 Log.ignore(e);
             }
@@ -181,11 +148,12 @@ public class JettyStarterProperties
         }
     }
 
+    // TODO remove
     /**
      * Replaces Java system properties in the values of the properties object with their actual values.
      * @param properties
      */
-    private void replaceSystemProperties(Properties properties)
+    private void replaceProperties(Properties properties)
     {
         // do other properties
         Enumeration names = properties.propertyNames();
@@ -200,7 +168,7 @@ public class JettyStarterProperties
                 continue;
             }
 
-            value = replaceSystemProperties(value);
+            value = evaluateProperties(value);
             properties.setProperty(name, value);
         }
     }
@@ -209,7 +177,7 @@ public class JettyStarterProperties
      * Replaces Java system properties in the values of the properties object with their actual values.
      * @param properties
      */
-    private String replaceSystemProperties(String value)
+    private String evaluateProperties(String value)
     {
         StringBuffer sb = new StringBuffer();
         int lastEnd = 0; // copy characters between matches
@@ -222,65 +190,181 @@ public class JettyStarterProperties
                 // copy characters between matches
                 sb.append(value.substring(lastEnd, m.start()));
             }
-            String systemProperty = System.getProperty(value.substring(m.start() + 2, m.end() - 1));
-            sb.append(systemProperty);
+            
+            // get the property name
+            String propertyName = value.substring(m.start() + 2, m.end() - 1);
+
+            // get the property value, attempting to get it from JettyStarter.properties first
+            // if not found, get it from Java system properties
+            String propertyValue = getProperty(propertyName);
+            if (propertyValue == null)
+            {
+                propertyValue = System.getProperty(propertyName);
+            }
+            sb.append(propertyValue);
+
             // record the end of the match
             lastEnd = m.end();
         }
+        
+        // write the characters after the last match
         sb.append(value.substring(lastEnd));
 
         return sb.toString();
     }
 
+    // TODO update
     private void setSystemProperties(Properties starterProperties)
     {
-        // do other properties
-        Enumeration names = starterProperties.propertyNames();
+        // two properties that must be set as Java system properties so they're
+        // available to the default jetty xml config files
+        String jettyHome = starterProperties.getProperty(JettyProperties.JETTY_HOME_PROPERTY);
+        String jettyLogs = starterProperties.getProperty(JettyProperties.JETTY_LOGS_PROPERTY);
 
-        while (names.hasMoreElements())
+        System.setProperty(JettyProperties.JETTY_HOME_PROPERTY, jettyHome);
+        System.setProperty(JettyProperties.JETTY_LOGS_PROPERTY, jettyLogs);
+        
+//        // do other properties
+//        Enumeration names = starterProperties.propertyNames();
+//
+//        while (names.hasMoreElements())
+//        {
+//            String name = (String) names.nextElement();
+//            String value = starterProperties.getProperty(name);
+//
+//            if ((value == null) || (value.trim().length() == 0))
+//            {
+//                continue;
+//            }
+//
+//            // prevent overwriting of existing values
+//            if (System.getProperty(name) == null)
+//            {
+//                System.setProperty(name, value);
+//            }
+//        }
+    }
+/*    
+    public static void writeProperty(String name, String value)
+    {
+        File propertiesFile = getPropertiesFile();
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+        boolean updated = false;
+        try
         {
-            String name = (String) names.nextElement();
-            String value = starterProperties.getProperty(name);
-
-            if ((value == null) || (value.trim().length() == 0))
+            reader = new BufferedReader(new FileReader(propertiesFile));
+            List<String> propertyList = new ArrayList<String>();
+            String line = null;
+            while ((line = reader.readLine()) != null)
             {
-                continue;
+                propertyList.add(line);
             }
-
-            // prevent overwriting of existing values
-            if (System.getProperty(name) == null)
+            
+            for (int i = propertyList.size() - 1; i >= 0; i--)
             {
-                System.setProperty(name, value);
+                if (propertyList.get(i).startsWith("#" + name + "="))
+                {
+                    if (!updated)
+                    {
+                        propertyList.set(i, name + "=" + value);
+                        updated = true;
+                    }
+                }
+                else if (propertyList.get(i).startsWith(name + "="))
+                {
+                    if (updated)
+                    {
+                        propertyList.set(i, "#" + name + "=" + value);
+                    }
+                    else
+                    {
+                        propertyList.set(i, name + "=" + value);
+                        updated = true;
+                    }
+                }
+            }
+            
+            // if the property was not already specified or on a commented line, add it to the end of the file
+            if (!updated)
+            {
+                propertyList.add("");
+                propertyList.add(name + "=" + value);
+                updated = true;
+            }
+            
+            writer = new BufferedWriter(new FileWriter(propertiesFile));
+            
+            for (String propertyItem : propertyList)
+            {
+                writer.write(propertyItem);
+                writer.newLine();
+            }
+            writer.flush();
+        }
+        catch (Exception e)
+        {
+            Log.info(e.getMessage());
+            Log.ignore(e);
+        }
+        finally
+        {
+            if (reader != null)
+            {
+                try
+                {
+                    reader.close();
+                }
+                catch (IOException e)
+                {
+                    Log.info(e.getMessage());
+                    Log.ignore(e);
+                }
+            }
+            if (writer != null)
+            {
+                try
+                {
+                    writer.close();
+                }
+                catch (IOException e)
+                {
+                    Log.info(e.getMessage());
+                    Log.ignore(e);
+                }
             }
         }
     }
-
+*/
     public static void main(String[] args)
     {
-        StringBuffer sb = new StringBuffer();
-        int lastEnd = 0;
-        //String property = "$(jetty.home)/etc/jetty.xml $(jetty.home)/etc/jetty-sage.xml";
-        //String property = "$(user.dir)/etc/jetty.xml $(user.dir)/etc/jetty-sage.xml";
-        //String property = "abc $(user.dir)/etc/jetty.xml $(user.dir)/etc/jetty-sage.xml";
-        //String property = "abc $(user.dir)$(user.dir)/etc/jetty.xml $(user.dir)/etc/jetty-sage.xml";
-        //String property = "$(user.dir)";
-        String property = "a$(user.dir)";
-        Matcher m = SYSTEM_PROPERTY_PATTERN.matcher(property);
-        while (m.find())
-        {
-            System.out.println(m.start());
-            System.out.println(m.end());
-            if (lastEnd < m.start())
-            {
-                // copy characters between matches
-                sb.append(property.substring(lastEnd, m.start()));
-            }
-            String systemProperty = System.getProperty(property.substring(m.start() + 2, m.end() - 1));
-            sb.append(systemProperty);
-            lastEnd = m.end();
-        }
-        sb.append(property.substring(lastEnd));
-        System.out.println(property);
-        System.out.println(sb.toString());
+        JettyStarterProperties props = new JettyStarterProperties();
+//        JettyStarterProperties.writeProperty(JETTY_PORT_PROPERTY, "82");
+//        JettyStarterProperties.writeProperty("jason", "friesen");
+//        StringBuffer sb = new StringBuffer();
+//        int lastEnd = 0;
+//        //String property = "$(jetty.home)/etc/jetty.xml $(jetty.home)/etc/jetty-sage.xml";
+//        //String property = "$(user.dir)/etc/jetty.xml $(user.dir)/etc/jetty-sage.xml";
+//        //String property = "abc $(user.dir)/etc/jetty.xml $(user.dir)/etc/jetty-sage.xml";
+//        //String property = "abc $(user.dir)$(user.dir)/etc/jetty.xml $(user.dir)/etc/jetty-sage.xml";
+//        //String property = "$(user.dir)";
+//        String property = "a$(user.dir)";
+//        Matcher m = SYSTEM_PROPERTY_PATTERN.matcher(property);
+//        while (m.find())
+//        {
+//            System.out.println(m.start());
+//            System.out.println(m.end());
+//            if (lastEnd < m.start())
+//            {
+//                // copy characters between matches
+//                sb.append(property.substring(lastEnd, m.start()));
+//            }
+//            String systemProperty = System.getProperty(property.substring(m.start() + 2, m.end() - 1));
+//            sb.append(systemProperty);
+//            lastEnd = m.end();
+//        }
+//        sb.append(property.substring(lastEnd));
+//        System.out.println(property);
+//        System.out.println(sb.toString());
     }
 }
