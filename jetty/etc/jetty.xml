@@ -13,6 +13,17 @@
 <Configure id="Server" class="org.mortbay.jetty.Server">
 
     <!-- =========================================================== -->
+    <!-- Jetty's default maximum size for HTML forms is 200          -->
+    <!-- kilobytes.  This needs to be increased for Google Web       -->
+    <!-- Toolkit Applications.  Override to be 5 megabytes.          -->
+    <!-- =========================================================== -->
+    <!-- the user can override the property from JettyStarter.properties -->
+    <Call class="java.lang.System" name="setProperty">
+      <Arg>org.mortbay.jetty.Request.maxFormContentSize</Arg>
+      <Arg><Property name="org.mortbay.jetty.Request.maxFormContentSize" default="5242880"/></Arg>
+    </Call> 
+
+    <!-- =========================================================== -->
     <!-- Server Thread Pool                                          -->
     <!-- =========================================================== -->
     <Set name="ThreadPool">
@@ -46,13 +57,13 @@
     <Call name="addConnector">
       <Arg>
           <New class="org.mortbay.jetty.nio.SelectChannelConnector">
-            <Set name="host"><SystemProperty name="jetty.host" /></Set>
-            <Set name="port"><SystemProperty name="jetty.port" default="8080"/></Set>
+            <Set name="host"><Property name="jetty.host" /></Set>
+            <Set name="port"><Property name="jetty.port" default="8080"/></Set>
             <Set name="maxIdleTime">30000</Set>
             <Set name="Acceptors">2</Set>
             <Set name="statsOn">false</Set>
             <!-- modified for JettyStarter -->
-            <Set name="confidentialPort"><SystemProperty name="jetty.ssl.port" default="8443"/></Set>
+            <Set name="confidentialPort"><Property name="jetty.ssl.port" default="8443"/></Set>
             <Set name="lowResourcesConnections">5000</Set>
             <Set name="lowResourcesMaxIdleTime">5000</Set>
           </New>
@@ -206,7 +217,7 @@
     <!-- configuration (see $(jetty.home)/contexts/test.xml for an   -->
     <!-- example).                                                   -->
     <!-- =========================================================== -->
-    <Set name="UserRealms">
+    <!--Set name="UserRealms">
       <Array type="org.mortbay.jetty.security.UserRealm">
         <Item>
           <New class="org.mortbay.jetty.security.HashUserRealm">
@@ -216,7 +227,7 @@
           </New>
         </Item>
       </Array>
-    </Set>
+    </Set-->
 
     <!-- =========================================================== -->
     <!-- Configure Request Log                                       -->

@@ -15,19 +15,19 @@
     <Arg>
       <New class="org.mortbay.jetty.security.SslSocketConnector">
         <!-- modified for JettyStarter -->
-        <Set name="Port"><SystemProperty name="jetty.ssl.port" default="8443"/></Set>
+        <Set name="Port"><Property name="jetty.ssl.port" default="8443"/></Set>
         <Set name="maxIdleTime">30000</Set>
         <Set name="handshakeTimeout">2000</Set>
         <!-- modified for JettyStarter, defaults to $(jetty.home)/etc/keystore -->
-        <Set name="keystore"><SystemProperty name="jetty.ssl.keystore" default="./jetty/etc/keystore" /></Set>
+        <Set name="keystore"><Property name="jetty.ssl.keystore" default="./jetty/etc/keystore" /></Set>
         <!-- modified for JettyStarter -->
-        <Set name="password"><SystemProperty name="jetty.ssl.password" default="OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4" /></Set>
+        <Set name="password"><Property name="jetty.ssl.password" default="OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4" /></Set>
         <!-- modified for JettyStarter -->
-        <Set name="keyPassword"><SystemProperty name="jetty.ssl.keypassword" default="OBF:1u2u1wml1z7s1z7a1wnl1u2g" /></Set>
+        <Set name="keyPassword"><Property name="jetty.ssl.keypassword" default="OBF:1u2u1wml1z7s1z7a1wnl1u2g" /></Set>
         <!-- modified for JettyStarter, defaults to $(jetty.home)/etc/keystore -->
-        <Set name="truststore"><SystemProperty name="jetty.ssl.truststore" default="./jetty/etc/keystore" /></Set>
+        <Set name="truststore"><Property name="jetty.ssl.truststore" default="./jetty/etc/keystore" /></Set>
         <!-- modified for JettyStarter -->
-        <Set name="trustPassword"><SystemProperty name="jetty.ssl.trustpassword" default="OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4" /></Set>
+        <Set name="trustPassword"><Property name="jetty.ssl.trustpassword" default="OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4" /></Set>
         <Set name="handshakeTimeout">2000</Set>
         <!-- Set name="ThreadPool">
           <New class="org.mortbay.thread.BoundedThreadPool">
