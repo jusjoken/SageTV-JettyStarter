@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.mortbay.jetty.security.Password;
 import org.mortbay.log.Log;
 
 import sagex.jetty.starter.JettyPlugin;
@@ -19,7 +20,7 @@ import sagex.plugin.IPropertyPersistence;
 
 public class UserRealmPersistence implements IPropertyPersistence
 {
-    private static final Pattern CREDENTIAL_REGEX = Pattern.compile("(.*):\\s*([\\S&&[^,]]*)(.*)");
+    private static final Pattern CREDENTIAL_REGEX = Pattern.compile("(.*?):\\s*([\\S&&[^,]]*)(.*)");
     private static final int USER_REGEX_GROUP     = 1;
     private static final int PASSWORD_REGEX_GROUP = 2;
     private static final int ROLES_REGEX_GROUP    = 3;
@@ -63,13 +64,23 @@ public class UserRealmPersistence implements IPropertyPersistence
                 Matcher m = CREDENTIAL_REGEX.matcher(line);
                 if (m.matches())
                 {
+                    String user = m.group(USER_REGEX_GROUP);
+                    String password = m.group(PASSWORD_REGEX_GROUP);
+
                     if (JettyPlugin.PROP_NAME_USER.equals(property))
                     {
-                        value = m.group(USER_REGEX_GROUP);
+                        value = user;
                     }
                     else if (JettyPlugin.PROP_NAME_PASSWORD.equals(property))
                     {
-                        value = m.group(PASSWORD_REGEX_GROUP);
+                        if (password.startsWith(Password.__OBFUSCATE))
+                        {
+                            value = Password.deobfuscate(password);
+                        }
+                        else
+                        {
+                            value = password;
+                        }
                     }
                     break;
                 }
@@ -128,7 +139,9 @@ public class UserRealmPersistence implements IPropertyPersistence
                     else if (JettyPlugin.PROP_NAME_PASSWORD.equals(property))
                     {
                         user = m.group(USER_REGEX_GROUP);
-                        password = value;
+                        // can't be encrypted because Sage's CONFIG_PASSWORD checks for the old
+                        // passwords before allowing the user to change it
+                        password = Password.obfuscate(value);
                     }
                     roles = m.group(ROLES_REGEX_GROUP);
 
