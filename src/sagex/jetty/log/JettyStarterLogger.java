@@ -52,11 +52,13 @@ public class JettyStarterLogger implements Logger
 
     public void debug(String msg, Throwable ex)
     {
+        if (msg == null) msg = "Null Message";
         stdErrLog.debug(msg, ex);
     }
 
     public void debug(String msg, Object arg1, Object arg2)
     {
+        if (msg == null) msg = "Null Message";
         stdErrLog.debug(msg, arg1, arg2);
     }
 
@@ -67,6 +69,7 @@ public class JettyStarterLogger implements Logger
 
     public void info(String msg, Object arg1, Object arg2)
     {
+        if (msg == null) msg = "Null Message";
         stdErrLog.info(msg, arg1, arg2);
     }
 
@@ -82,11 +85,13 @@ public class JettyStarterLogger implements Logger
 
     public void warn(String msg, Throwable ex)
     {
+        if (msg == null) msg = "Null Message";
         stdErrLog.warn(msg, ex);
     }
 
     public void warn(String msg, Object arg1, Object arg2)
     {
+        if (msg == null) msg = "Null Message";
         stdErrLog.warn(msg, arg1, arg2);
     }
 }
