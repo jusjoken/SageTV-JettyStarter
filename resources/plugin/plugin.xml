@@ -2,17 +2,38 @@
 <SageTVPlugin>
   <Name>Jetty Web Server</Name>
   <Identifier>Jetty</Identifier>
-  <Description>An embedded Java web server that runs web applications in SageTV.</Description>
+  <Description>
+    <![CDATA[
+The Jetty Web Server Plugin provides a platform for web application plugins for SageTV.
+ 
+Currently available web applications can manage SageTV recordings from desktop or mobile web browsers, manage fanart and metadata, provide remote web services for SageTV, configure batch job processing, and more.
+ 
+The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web server from Mortbay Consulting that can be embedded in a Java program such as SageTV.  The second part is a set of plugin classes created by the author that interact with SageTV to start, stop, and configure the Jetty web server.
+    ]]>
+  </Description>
   <Author>jreichen</Author>
   <CreationDate>2008.06.01</CreationDate>
   <ModificationDate>@@last-modified@@</ModificationDate>
-  <Version beta="true">@@plugin-version@@</Version>
+  <Version>@@plugin-version@@</Version>
   <Desktop>false</Desktop>
   <ResourcePath>jetty</ResourcePath>
+  <Webpage>http://forums.sagetv.com/forums/showthread.php?t=37099</Webpage>
   <Webpage>http://tools.assembla.com/sageplugins/wiki/Jetty</Webpage>
+  <Webpage>http://jetty.codehaus.org/jetty/</Webpage>
+  <ReleaseNotes>
+    <![CDATA[
+1. Configuration options for port numbers, SSL, default username and password, logging level, and UPnP router configuration.
+2. Increase maximum HTML form size to support Google Web Toolkit applications.
+3. Obfuscate the password stored in realm.properties.
+    ]]>
+  </ReleaseNotes>
   <Dependency>
     <Core></Core>
-    <MinVersion>7.0.7</MinVersion>
+    <MinVersion>7.0.8</MinVersion>
+  </Dependency>
+  <Dependency>
+    <JVM></JVM>
+    <MinVersion>1.5</MinVersion>
   </Dependency>
   <Dependency>
     <Plugin>sagex-api</Plugin>
