@@ -148,11 +148,11 @@ public class JettyStarterProperties
         }
     }
 
-    // TODO remove
     /**
      * Replaces Java system properties in the values of the properties object with their actual values.
      * @param properties
      */
+    @SuppressWarnings("unchecked") // Enumeration
     private void replaceProperties(Properties properties)
     {
         // do other properties
@@ -213,129 +213,6 @@ public class JettyStarterProperties
         return sb.toString();
     }
 
-    // TODO update
-    private void setSystemProperties(Properties starterProperties)
-    {
-        // two properties that must be set as Java system properties so they're
-        // available to the default jetty xml config files
-        String jettyHome = starterProperties.getProperty(JettyProperties.JETTY_HOME_PROPERTY);
-        String jettyLogs = starterProperties.getProperty(JettyProperties.JETTY_LOGS_PROPERTY);
-
-        System.setProperty(JettyProperties.JETTY_HOME_PROPERTY, jettyHome);
-        System.setProperty(JettyProperties.JETTY_LOGS_PROPERTY, jettyLogs);
-        
-//        // do other properties
-//        Enumeration names = starterProperties.propertyNames();
-//
-//        while (names.hasMoreElements())
-//        {
-//            String name = (String) names.nextElement();
-//            String value = starterProperties.getProperty(name);
-//
-//            if ((value == null) || (value.trim().length() == 0))
-//            {
-//                continue;
-//            }
-//
-//            // prevent overwriting of existing values
-//            if (System.getProperty(name) == null)
-//            {
-//                System.setProperty(name, value);
-//            }
-//        }
-    }
-/*    
-    public static void writeProperty(String name, String value)
-    {
-        File propertiesFile = getPropertiesFile();
-        BufferedReader reader = null;
-        BufferedWriter writer = null;
-        boolean updated = false;
-        try
-        {
-            reader = new BufferedReader(new FileReader(propertiesFile));
-            List<String> propertyList = new ArrayList<String>();
-            String line = null;
-            while ((line = reader.readLine()) != null)
-            {
-                propertyList.add(line);
-            }
-            
-            for (int i = propertyList.size() - 1; i >= 0; i--)
-            {
-                if (propertyList.get(i).startsWith("#" + name + "="))
-                {
-                    if (!updated)
-                    {
-                        propertyList.set(i, name + "=" + value);
-                        updated = true;
-                    }
-                }
-                else if (propertyList.get(i).startsWith(name + "="))
-                {
-                    if (updated)
-                    {
-                        propertyList.set(i, "#" + name + "=" + value);
-                    }
-                    else
-                    {
-                        propertyList.set(i, name + "=" + value);
-                        updated = true;
-                    }
-                }
-            }
-            
-            // if the property was not already specified or on a commented line, add it to the end of the file
-            if (!updated)
-            {
-                propertyList.add("");
-                propertyList.add(name + "=" + value);
-                updated = true;
-            }
-            
-            writer = new BufferedWriter(new FileWriter(propertiesFile));
-            
-            for (String propertyItem : propertyList)
-            {
-                writer.write(propertyItem);
-                writer.newLine();
-            }
-            writer.flush();
-        }
-        catch (Exception e)
-        {
-            Log.info(e.getMessage());
-            Log.ignore(e);
-        }
-        finally
-        {
-            if (reader != null)
-            {
-                try
-                {
-                    reader.close();
-                }
-                catch (IOException e)
-                {
-                    Log.info(e.getMessage());
-                    Log.ignore(e);
-                }
-            }
-            if (writer != null)
-            {
-                try
-                {
-                    writer.close();
-                }
-                catch (IOException e)
-                {
-                    Log.info(e.getMessage());
-                    Log.ignore(e);
-                }
-            }
-        }
-    }
-*/
     public static void main(String[] args)
     {
         JettyStarterProperties props = new JettyStarterProperties();
