@@ -48,6 +48,16 @@ public abstract class JettyProperties
         String jettyHome = starterProperties.getProperty(JettyProperties.JETTY_HOME_PROPERTY);
         String jettyLogs = starterProperties.getProperty(JettyProperties.JETTY_LOGS_PROPERTY);
 
+        if (jettyHome == null)
+        {
+            throw new IllegalStateException(JettyProperties.JETTY_HOME_PROPERTY + " property is not configured");
+        }
+
+        if (jettyLogs == null)
+        {
+            throw new IllegalStateException(JettyProperties.JETTY_LOGS_PROPERTY + " property is not configured");
+        }
+
         System.setProperty(JettyProperties.JETTY_HOME_PROPERTY, jettyHome);
         System.setProperty(JettyProperties.JETTY_LOGS_PROPERTY, jettyLogs);
     }
