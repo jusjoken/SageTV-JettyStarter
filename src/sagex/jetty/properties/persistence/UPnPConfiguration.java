@@ -72,6 +72,20 @@ public class UPnPConfiguration
 
     private static Map<String, InternetGatewayDevice> devicesMap = new HashMap<String, InternetGatewayDevice>();
     
+    static
+    {
+        // try to preload UPnP device
+        Runnable r = new Runnable()
+        {
+            public void run()
+            {
+                getUPnPDevice();
+            }
+        };
+        Thread t = new Thread(r);
+        t.start();
+    }
+
     /**
      * Has the user enabled Placeshifter port forwarding on the server?
      */
@@ -285,7 +299,7 @@ public class UPnPConfiguration
         }
     }
 
-    private static InternetGatewayDevice getUPnPDevice()
+    private synchronized static InternetGatewayDevice getUPnPDevice()
     {
         Log.debug("UPNP: Entering UPnPConfiguration.getUPnPDevice())");
 
