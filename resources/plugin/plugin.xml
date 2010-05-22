@@ -17,9 +17,9 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Version>@@plugin-version@@</Version>
   <Desktop>false</Desktop>
   <ResourcePath>jetty</ResourcePath>
-  <Webpage>http://forums.sagetv.com/forums/showthread.php?t=37099</Webpage>
-  <Webpage>http://tools.assembla.com/sageplugins/wiki/Jetty</Webpage>
-  <Webpage>http://jetty.codehaus.org/jetty/</Webpage>
+  <Webpage title="Forum Support Thread">http://forums.sagetv.com/forums/showthread.php?t=37099</Webpage>
+  <Webpage title="Jetty Plugin Wiki">http://tools.assembla.com/sageplugins/wiki/Jetty</Webpage>
+  <Webpage title="Jetty Home Page - Mortbay Consulting">http://jetty.codehaus.org/jetty/</Webpage>
   <ReleaseNotes>
     <![CDATA[
 1. Configuration options for port numbers, SSL, default username and password, logging level, and UPnP router configuration.
