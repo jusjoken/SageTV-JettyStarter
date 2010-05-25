@@ -1,14 +1,21 @@
 package sagex.jetty.starter;
 
+import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mortbay.log.Log;
 
 import sage.SageTVPlugin;
 import sage.SageTVPluginRegistry;
+import sagex.UIContext;
 import sagex.api.Configuration;
 import sagex.api.Global;
 import sagex.jetty.log.JettyStarterLogger;
@@ -17,6 +24,7 @@ import sagex.jetty.properties.SagePropertiesImpl;
 import sagex.jetty.properties.persistence.SslEnabledPersistence;
 import sagex.jetty.properties.persistence.UPnPConfiguration;
 import sagex.jetty.properties.persistence.UserRealmPersistence;
+import sagex.jetty.properties.visibility.LocatorURLPropertyVisibility;
 import sagex.jetty.properties.visibility.UPnPPropertyVisibility;
 import sagex.plugin.AbstractPlugin;
 import sagex.plugin.ButtonClickHandler;
@@ -35,7 +43,11 @@ public class JettyPlugin extends AbstractPlugin
     public static final String PROP_NAME_UPNP_EXTERNAL_HTTP_PORT  = "jetty/upnp.external.http";
     public static final String PROP_NAME_UPNP_EXTERNAL_HTTPS_PORT = "jetty/upnp.external.https";
     public static final String PROP_NAME_UPNP_UNAVAILABLE = "jetty/upnp.unavailable";
-    
+    public static final String PROP_NAME_LOCATOR_HTTP_URL  = "jetty/locator.http.url";
+    public static final String PROP_NAME_LOCATOR_HTTPS_URL = "jetty/locator.https.url";
+
+    private static final List<String> PROP_RESTART_REQUIRED = new ArrayList<String>();
+
     // TODO resources file
     public static final String PROP_HELP_UPNP_DEFAULT  = "Choose whether to automatically or manually configure your router or firewall to allow access to SageTV's web server from outside your home network.";
     public static final String PROP_HELP_UPNP_DISABLED_DEFAULT_LOGIN = "UPnP cannot be configured for Jetty when using the default user name or password.";
@@ -51,6 +63,7 @@ public class JettyPlugin extends AbstractPlugin
     public static final String LOGLEVEL_CHOICE_VERBOSE = "VERBOSE";
 
     //    private boolean restartNeeded = false;// *property name
+    private Map<String, String> modifiedProperties = new HashMap<String, String>();
 
     static
     {
@@ -58,6 +71,13 @@ public class JettyPlugin extends AbstractPlugin
         JettyStarterLogger.init();
 
         Log.info("Jetty Starter plugin version " + JettyPlugin.class.getPackage().getImplementationVersion());
+        
+        PROP_RESTART_REQUIRED.add(PROP_NAME_USER);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_PASSWORD);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_HTTP_PORT);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_SSL_ENABLE);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_HTTPS_PORT);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_LOG_LEVEL);
     }
     
     public JettyPlugin(SageTVPluginRegistry registry)
@@ -69,7 +89,7 @@ public class JettyPlugin extends AbstractPlugin
                     PROP_NAME_RESTART,
                     "Restart Web Server",
                     "Restart Web Server",
-                    "Click to restart Jetty after changing its settings.");
+                    "Click to restart the SageTV web server after changing its settings. Properties marked with '*' have been modified and require the web server to be restarted.");
 
         addProperty(SageTVPlugin.CONFIG_TEXT,
                     PROP_NAME_USER,
@@ -82,7 +102,7 @@ public class JettyPlugin extends AbstractPlugin
                     PROP_NAME_PASSWORD,
                     "frey",
                     "Password",
-                    "The user's password.")
+                    "The user's password.  The default password is 'frey'.")
                     .setPersistence(new UserRealmPersistence());
 
         addProperty(SageTVPlugin.CONFIG_BOOL,
@@ -106,6 +126,20 @@ public class JettyPlugin extends AbstractPlugin
                     "The web server's HTTPS port.")
                     .setVisibleOnSetting(this, PROP_NAME_SSL_ENABLE);// TODO .setValidationProvider(new JettyPortValidator());
 
+        addProperty(SageTVPlugin.CONFIG_BUTTON,
+                    PROP_NAME_LOCATOR_HTTP_URL,
+                    "",
+                    "Web Server Address",
+                    "")//"The URL to access SageTV's web server outside your home network.\nhttp://locator.sagetv.com/locator.php?p=8080&id=d814-66bc-a6c1-11de&r=/sage")
+                    .setVisibility(new LocatorURLPropertyVisibility(this, false));
+
+        addProperty(SageTVPlugin.CONFIG_BUTTON,
+                    PROP_NAME_LOCATOR_HTTPS_URL,
+                    "",
+                    "Encrypted Web Server Address",
+                    "")//"The encrypted URL to access SageTV's web server outside your home network.\nhttp://locator.sagetv.com/locator.php?p=8080&id=d814-66bc-a6c1-11de&r=/sage&ssl=")
+                    .setVisibility(new LocatorURLPropertyVisibility(this, true));//                .setVisibleOnSetting(this, PROP_NAME_SSL_ENABLE);// TODO .setValidationProvider(new JettyPortValidator());
+                
 //        addProperty(SageTVPlugin.CONFIG_DIRECTORY,
 //                    "jetty/createkeystore",///*"jetty/https/port",*/ JettyStarterProperties.JETTY_SSL_PORT_PROPERTY,
 //                    "Create...",
@@ -169,7 +203,7 @@ public class JettyPlugin extends AbstractPlugin
     /**
      * Called by SageTV 7 or later to start the Jetty application server
      */
-    public void start()
+    public synchronized void start()
     {
         super.start();
         Log.debug("Entering JettyPlugin.start()");
@@ -192,7 +226,7 @@ public class JettyPlugin extends AbstractPlugin
     /**
      * Called by SageTV 7 or later to stop the Jetty application server
      */
-    public void stop()
+    public synchronized void stop()
     {
         super.stop();
         Log.debug("Entering JettyPlugin.stop()");
@@ -200,6 +234,7 @@ public class JettyPlugin extends AbstractPlugin
         try
         {
             JettyInstance.getInstance().stop();
+            modifiedProperties.clear();
         }
         catch (Exception e)
         {
@@ -228,6 +263,14 @@ public class JettyPlugin extends AbstractPlugin
                 help = JettyPlugin.PROP_HELP_UPNP_DISABLED_DEFAULT_LOGIN;
             }
         }
+        else if (PROP_NAME_LOCATOR_HTTP_URL.equals(setting))
+        {
+            help = getLocatorHttpUrl();
+        }
+        else if (PROP_NAME_LOCATOR_HTTPS_URL.equals(setting))
+        {
+            help = getLocatorHttpsUrl();
+        }
 
         if (help == null)
         {
@@ -237,10 +280,113 @@ public class JettyPlugin extends AbstractPlugin
         return help;
     }
 
+    @Override
+    public String getConfigLabel(String setting)
+    {
+        String label = super.getConfigLabel(setting);
+
+        if (modifiedProperties.containsKey(setting))
+        {
+            label += " *";
+        }
+
+        return label;
+    }
+
+    @Override
+    public String getConfigValue(String setting)
+    {
+        Log.debug("Entering JettyPlugin.getConfigValue(" + setting + "))");
+        Log.debug("Global.GetUIContextName() " + Global.GetUIContextName());
+        Log.debug("UIContext.getCurrentContext() " + UIContext.getCurrentContext());
+        Log.debug("thread name " + Thread.currentThread().getName());
+        Log.debug("Global.IsRemoteUI(UIContext.getCurrentContext()) " + Global.IsRemoteUI(UIContext.getCurrentContext()));
+        Log.debug("Global.IsServerUI(UIContext.getCurrentContext()) " + Global.IsServerUI(UIContext.getCurrentContext()));
+        Log.debug("Global.IsDesktopUI(UIContext.getCurrentContext()) " + Global.IsDesktopUI(UIContext.getCurrentContext()));
+        Log.debug("Global.IsClientUI(UIContext.getCurrentContext()) " + Global.IsClient(UIContext.getCurrentContext()));
+        
+        String configValue = null;
+
+        if ((PROP_NAME_LOCATOR_HTTP_URL.equals(setting)) ||
+            (PROP_NAME_LOCATOR_HTTPS_URL.equals(setting)))
+        {
+            // extender or placeshifter
+            if (Global.IsRemoteUI(new UIContext(Global.GetUIContextName())))
+            {
+                // not running on the server
+                if (!Global.IsServerUI(new UIContext(Global.GetUIContextName())))
+                {
+                    // remote placeshifter
+                    if (Global.IsDesktopUI(new UIContext(Global.GetUIContextName())))
+                    {
+                        configValue = "Clipboard Unavailable on Remote Placeshifters";
+                    }
+                    // extender
+                    else
+                    {
+                        configValue = "Clipboard Unavailable on Extenders";
+                    }
+                }
+                else
+                {
+                    if (GraphicsEnvironment.isHeadless())
+                    {
+                        // local placeshifter on the server in headless mode
+                        configValue = "Clipboard Unavailable in Headless Mode";
+                    }
+                    else
+                    {
+                        // local placeshifter on the server
+                        configValue = "Copy Link to Clipboard";
+                    }
+                }
+            }
+            // SageTV Client
+            else
+            {
+                // ui not running on the server
+                if (!Global.IsServerUI(new UIContext(Global.GetUIContextName())))
+                {
+                    // plugin is running on the client
+                    if (Global.IsClient())
+                    {
+                        configValue = "Copy Link to Clipboard";
+                    }
+                    // plugin is running on the server
+                    else
+                    {
+                        configValue = "Clipboard Unavailable for Server Plugins";
+                    }
+                }
+                else
+                {
+                    if (GraphicsEnvironment.isHeadless())
+                    {
+                        // local client on the server in headless mode
+                        configValue = "Clipboard Unavailable in Headless Mode";
+                    }
+                    else
+                    {
+                        // local client on the server
+                        configValue = "Copy Link to Clipboard";
+                    }
+                }
+            }
+        }
+
+        if (configValue == null)
+        {
+            configValue = super.getConfigValue(setting);
+        }
+
+        return configValue;
+    }
+
     public void setConfigValue(String setting, String value)
     {
         Log.debug("Entering JettyPlugin.setConfigValue(" + setting + ", " + value + "))");
-
+        String originalValue = getConfigValue(setting);
+        
         // remove the current UPnP settings and router mappings before changing the property values
         if (!Global.IsClient())
         {
@@ -262,6 +408,51 @@ public class JettyPlugin extends AbstractPlugin
         {
             UPnPConfiguration.configureUPnP(this);
         }
+        
+        if (PROP_RESTART_REQUIRED.contains(setting))
+        {
+            String savedValue = modifiedProperties.get(setting);
+            
+            // if both are null or if they are equal then undo the modified indicator
+            if (((savedValue == null) && (value == null)) ||
+                ((savedValue != null) && savedValue.equals(value)))
+            {
+                modifiedProperties.remove(setting);
+            }
+            else
+            {
+                if (!modifiedProperties.containsKey(setting))
+                {
+                    modifiedProperties.put(setting, originalValue);
+                }
+            }
+        }
+    }
+
+    private String getLocatorHttpUrl()
+    {
+        String locatorId = Configuration.GetServerProperty("locator/id", null);
+        String port = getConfigValue(PROP_NAME_HTTP_PORT);
+        if (JettyPlugin.UPNP_CHOICE_ADVANCED_CONFIGURATION.equals(getConfigValue(JettyPlugin.PROP_NAME_UPNP)))
+        {
+            port = getConfigValue(PROP_NAME_UPNP_EXTERNAL_HTTP_PORT);
+        }
+        String urlFormat = "http://locator.sagetv.com/locator.php?id=%s&p=%s&r=/apps";
+        String url = String.format(urlFormat, locatorId, port);
+        return url;
+    }
+
+    private String getLocatorHttpsUrl()
+    {
+        String locatorId = Configuration.GetServerProperty("locator/id", null);
+        String port = getConfigValue(PROP_NAME_HTTPS_PORT);
+        if (JettyPlugin.UPNP_CHOICE_ADVANCED_CONFIGURATION.equals(getConfigValue(JettyPlugin.PROP_NAME_UPNP)))
+        {
+            port = getConfigValue(PROP_NAME_UPNP_EXTERNAL_HTTPS_PORT);
+        }
+        String urlFormat = "https://locator.sagetv.com/locator.php?id=%s&p=%s&r=/apps&ssl=";
+        String url = String.format(urlFormat, locatorId, port);
+        return url;
     }
 
     /**
@@ -366,10 +557,105 @@ public class JettyPlugin extends AbstractPlugin
         }
     }
 
-    @ButtonClickHandler(value=PROP_NAME_RESTART)
-    public void onRestartButtonClicked(String setting, String value)
+    private boolean isClipboardAvailable()
     {
+        boolean isClipboardAvailable = true;
+
+        // extender or placeshifter
+        if (Global.IsRemoteUI(new UIContext(Global.GetUIContextName())))
+        {
+            // not running on the server
+            if (!Global.IsServerUI(new UIContext(Global.GetUIContextName())))
+            {
+                // placeshifter
+                if (Global.IsDesktopUI(new UIContext(Global.GetUIContextName())))
+                {
+                    isClipboardAvailable = false;
+                }
+                // extender
+                else
+                {
+                    isClipboardAvailable = false;
+                }
+            }
+            else
+            {
+                if (GraphicsEnvironment.isHeadless())
+                {
+                    // running on the server in headless mode
+                    isClipboardAvailable = false;
+                }
+                else
+                {
+                    isClipboardAvailable = true;
+                }
+            }
+        }
+        else
+        {
+            // not running on the server
+            if (!Global.IsServerUI(new UIContext(Global.GetUIContextName())))
+            {
+                if (Global.IsClient())
+                {
+                    isClipboardAvailable = true;
+                }
+                else
+                {
+                    isClipboardAvailable = false;
+                }
+            }
+            else
+            {
+                if (GraphicsEnvironment.isHeadless())
+                {
+                    // local client on the server in headless mode
+                    isClipboardAvailable = false;
+                }
+                else
+                {
+                    // local client on the server
+                    isClipboardAvailable = true;
+                }
+            }
+        }
+        
+        return isClipboardAvailable;
+    }
+
+    @ButtonClickHandler(value=PROP_NAME_RESTART)
+    public synchronized void onRestartButtonClicked(String setting, String value)
+    {
+        Log.debug("Entering JettyPlugin.onRestartButtonClicked(" + setting + ", " + value + ")");
         stop();
         start();
+    }
+
+    @ButtonClickHandler(value=PROP_NAME_LOCATOR_HTTP_URL)
+    public void onLocatorHttpUrlButtonClicked(String setting, String value)
+    {
+        Log.debug("Entering JettyPlugin.onLocatorHttpUrlButtonClicked(" + setting + ", " + value + ")");
+
+        if (isClipboardAvailable())
+        {
+            String url = getLocatorHttpUrl();
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            StringSelection urlSelection = new StringSelection(url);
+            clipboard.setContents(urlSelection, urlSelection);
+        }
+    }
+
+    @ButtonClickHandler(value=PROP_NAME_LOCATOR_HTTPS_URL)
+    public void onLocatorHttpsUrlButtonClicked(String setting, String value)
+    {
+        Log.debug("Entering JettyPlugin.onLocatorHttpsUrlButtonClicked(" + setting + ", " + value + ")");
+
+        if (isClipboardAvailable())
+        {
+            String url = getLocatorHttpsUrl();
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            StringSelection urlSelection = new StringSelection(url);
+            clipboard.setContents(urlSelection, urlSelection);
+        }
     }
 }
