@@ -2,9 +2,10 @@
 
 <project name="SageTV JettyStarter plugin" default="dist">
 
+   <buildnumber/>
    <property file="build.properties"/>
    
-   <property name="plugin.version" value="1.7.4"/>
+   <property name="plugin.version" value="2.0.0"/>
 
    <property name="src.dir"   location="src"/>
    <property name="build.dir" location="build"/>
@@ -16,8 +17,8 @@
    <property name="jetty.lib.dir" location="lib"/>
    <property name="jetty.extlib.dir" location="extlib"/>
 
-   <condition property="implementation.version" value="${plugin.version}.${build.number}" else="${plugin.version}">
-      <isset property="build.number"/>
+   <condition property="implementation.version" value="${plugin.version}.${hudson.build.number}" else="${plugin.version}.${build.number}">
+      <isset property="hudson.build.number"/>
    </condition>
 
    <path id="lib.classpath.id">
@@ -46,7 +47,7 @@
       <ant antfile="build.xml" inheritall="false">
          <!-- The jar with the SageTV APIs is placed in the Hudson home directory -->
          <property name="sage.lib.dir" value="${hudson.home.dir}"/>
-         <property name="build.number" value="${env.BUILD_NUMBER}"/>
+         <property name="hudson.build.number" value="${env.BUILD_NUMBER}"/>
       </ant>
    </target>
 
@@ -61,10 +62,14 @@
       <mkdir dir="${build.dir}/zip/"/>
       <mkdir dir="${build.dir}/zip/JARs"/>
       <mkdir dir="${build.dir}/zip/jetty"/>
+      <mkdir dir="${build.dir}/zip/jetty/contexts"/>
+      <mkdir dir="${build.dir}/zip/jetty/webapps"/>
       <mkdir dir="${build.dir}/packages/"/>
       <mkdir dir="${build.dir}/packages/jars"/>
       <mkdir dir="${build.dir}/packages/config-files"/>
       <mkdir dir="${build.dir}/packages/config-files/jetty"/>
+      <mkdir dir="${build.dir}/packages/context"/>
+      <mkdir dir="${build.dir}/packages/war"/>
       <mkdir dir="${dist.dir}"/>
    </target>
 
@@ -96,7 +101,22 @@
       </jar>
    </target>
 
-   <target name="zip" depends="jar">
+   <target name="war" depends="compile">
+      <war basedir="WebContent/apps"
+           destfile="${build.dir}/apps.war"
+           manifest="WebContent/apps/META-INF/MANIFEST.MF"
+           webxml="WebContent/apps/WEB-INF/web.xml"
+      >
+         <manifest>
+            <attribute name="Specification-Title" value="Jetty Web Applications for SageTV"/>
+            <attribute name="Specification-Version" value="${plugin.version}"/>
+            <attribute name="Implementation-Title" value="Jetty Web Applications for SageTV"/>
+            <attribute name="Implementation-Version" value="${implementation.version}"/>
+         </manifest>
+      </war>
+   </target>
+   
+   <target name="zip" depends="jar, war">
 
       <copy file="JettyStarter.properties" todir="${build.dir}/zip">
       </copy>
@@ -111,14 +131,23 @@
            <fileset refid="lib.fileset.id"/>
        </copy>
 
-       <fixcrlf srcdir="${build.dir}/zip" eol="dos">
+      <copy todir="${build.dir}/zip/jetty/contexts">
+           <fileset file="resources/contexts/apps.xml"/>
+      </copy>
+
+      <copy todir="${build.dir}/zip/jetty/webapps">
+          <fileset file="${build.dir}/apps.war"/>
+      </copy>
+
+      <fixcrlf srcdir="${build.dir}/zip" eol="dos">
           <include name="**/*.txt"/>
           <include name="**/*.xml"/>
           <include name="**/*.conf"/>
           <include name="**/*.properties"/>
       </fixcrlf>
 
-      <zip basedir="${build.dir}/zip" destfile="${dist.dir}/jetty-starter.zip">
+      <zip destfile="${dist.dir}/jetty-starter.zip">
+         <zipfileset dir="${build.dir}/zip"/> 
       </zip>
 
    </target>
@@ -130,7 +159,7 @@
           <fileset refid="lib.fileset.id"/>
       </copy>
 
-      <zip basedir="${build.dir}/packages/jars" destfile="${build.dir}/packages/jetty-starter-jars-${plugin.version}.zip">
+      <zip basedir="${build.dir}/packages/jars" destfile="${build.dir}/packages/jetty-starter-jars-${implementation.version}.zip">
       </zip>
    </target>
 
@@ -149,36 +178,56 @@
       </fixcrlf>
 
       <!-- Files that will be overwritten during the install -->
-      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-config-files-${plugin.version}.zip">
+      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-config-files-${implementation.version}.zip">
           <exclude name="jetty/etc/realm.properties"/>
       </zip>
 
       <!-- Files that will not be overwritten during the install -->
-      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-user-config-files-${plugin.version}.zip">
+      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-user-config-files-${implementation.version}.zip">
           <include name="jetty/etc/realm.properties"/>
       </zip>
    </target>
 
-   <!-- Create the plugin's package -->
-   <target name="dist-plugin" depends="package-jars, package-config-files">
+   <target name="package-context">
+     <copy todir="${build.dir}/packages/context" file="resources/contexts/apps.xml"/>
 
-      <copy tofile="${build.dir}/packages/plugin-${plugin.version}.xml" file="resources/plugin/plugin.xml">
+     <zip destfile="${build.dir}/packages/jetty-starter-webapp-context-file-${implementation.version}.zip">
+       <zipfileset prefix="jetty/contexts" dir="${build.dir}/packages/context"/>
+     </zip>
+   </target>
+
+   <target name="package-war">
+     <copy todir="${build.dir}/packages/war" file="${build.dir}/apps.war"/>
+
+     <zip destfile="${build.dir}/packages/jetty-starter-webapp-war-file-${implementation.version}.zip">
+       <zipfileset dir="${build.dir}/packages/war" prefix="jetty/webapps" />
+     </zip>
+   </target>
+
+   <!-- Create the plugin's package -->
+   <target name="dist-plugin" depends="package-jars, package-config-files, package-context, package-war">
+
+      <copy tofile="${build.dir}/packages/plugin-${implementation.version}.xml" file="resources/plugin/plugin.xml">
       </copy>
 
       <tstamp>
          <format property="last.modified" pattern="yyyy.MM.dd" />
       </tstamp>
 
-      <checksum file="${build.dir}/packages/jetty-starter-jars-${plugin.version}.zip"              property="md5.jars"/>
-      <checksum file="${build.dir}/packages/jetty-starter-config-files-${plugin.version}.zip"      property="md5.config-files"/>
-      <checksum file="${build.dir}/packages/jetty-starter-user-config-files-${plugin.version}.zip" property="md5.user-config-files"/>
+      <checksum file="${build.dir}/packages/jetty-starter-jars-${implementation.version}.zip"                property="md5.jars"/>
+      <checksum file="${build.dir}/packages/jetty-starter-config-files-${implementation.version}.zip"        property="md5.config-files"/>
+      <checksum file="${build.dir}/packages/jetty-starter-user-config-files-${implementation.version}.zip"   property="md5.user-config-files"/>
+      <checksum file="${build.dir}/packages/jetty-starter-webapp-context-file-${implementation.version}.zip" property="md5.context-file"/>
+      <checksum file="${build.dir}/packages/jetty-starter-webapp-war-file-${implementation.version}.zip"     property="md5.war-file"/>
 
-      <replace file="${build.dir}/packages/plugin-${plugin.version}.xml" summary="yes">
+      <replace file="${build.dir}/packages/plugin-${implementation.version}.xml" summary="yes">
          <replacefilter token="@@jar-checksum@@"              value="${md5.jars}"/>
          <replacefilter token="@@config-file-checksum@@"      value="${md5.config-files}"/>
          <replacefilter token="@@user-config-file-checksum@@" value="${md5.user-config-files}"/>
+         <replacefilter token="@@context-file-checksum@@"     value="${md5.context-file}"/>
+         <replacefilter token="@@war-file-checksum@@"         value="${md5.war-file}"/>
          <replacefilter token="@@last-modified@@"             value="${last.modified}"/>
-         <replacefilter token="@@plugin-version@@"            value="${plugin.version}"/>
+         <replacefilter token="@@plugin-version@@"            value="${implementation.version}"/>
       </replace>
 
       <zip basedir="${build.dir}/packages" destfile="${dist.dir}/jetty-starter-plugin-${implementation.version}.zip">
