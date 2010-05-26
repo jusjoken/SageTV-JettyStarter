@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.mortbay.io.Buffer;
+import org.mortbay.log.Log;
 
 public class MimeTypes extends org.mortbay.jetty.MimeTypes
 {
@@ -159,7 +160,7 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
                 }
                 else
                 {
-                    System.out.println("mime.types file not found in override location " +
+                    Log.info("mime.types file not found in override location " +
                             overrideMimeTypesFile.getAbsolutePath() + ".  Checking default locations.");
                 }
             }
@@ -175,14 +176,14 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
         {
             if (getLocation() == null)
             {
-                System.out.println("mime.types file for Jetty plugin not found in " +
+                Log.info("mime.types file for Jetty plugin not found in " +
                     "user location " + userMimeTypesFile.getAbsolutePath() + " or " +
                     "default plugin location " + defaultMimeTypesFile.getAbsolutePath() + ". " +
                     "Jetty's default mime types will be the only types available.");
             }
             else
             {
-                System.out.println("mime.types file for Jetty plugin not found in " +
+                Log.info("mime.types file for Jetty plugin not found in " +
                     "user location " + userMimeTypesFile.getAbsolutePath() + ", " +
                     "default plugin location " + defaultMimeTypesFile.getAbsolutePath() + ", or " +
                     "web application override location + " + overrideMimeTypesFile.getAbsolutePath() + ", " +
