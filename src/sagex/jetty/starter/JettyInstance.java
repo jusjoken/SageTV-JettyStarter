@@ -11,7 +11,10 @@ import java.util.Properties;
 import org.mortbay.component.AbstractLifeCycle;
 import org.mortbay.component.LifeCycle;
 import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.handler.AbstractHandlerContainer;
+import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.log.Log;
 import org.mortbay.resource.Resource;
 import org.mortbay.xml.XmlConfiguration;
@@ -251,6 +254,8 @@ public class JettyInstance extends AbstractLifeCycle
                 }
             }
         }
+        
+        printStartupErrors();
     }
 
     /**
@@ -273,6 +278,47 @@ public class JettyInstance extends AbstractLifeCycle
                         // remove the server from the shutdown hook
                         ((Server) configurationObject).setStopAtShutdown(false);
                     }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Print startup errors held in any WebAppContext object
+     */
+    private void printStartupErrors()
+    {
+        for (Object object : configurationObjects)
+        {
+            if (object instanceof AbstractHandlerContainer)
+            {
+                printStartupErrors((AbstractHandlerContainer) object);
+            }
+        }
+    }
+
+    private void printStartupErrors(AbstractHandlerContainer handlers)
+    {
+        for (Handler handler : handlers.getChildHandlers())
+        {
+            if (handler instanceof AbstractHandlerContainer)
+            {
+                printStartupErrors((AbstractHandlerContainer) handler);
+            }
+            else if (handler instanceof WebAppContext)
+            {
+                WebAppContext context = (WebAppContext) handler;
+                Throwable t = context.getUnavailableException();
+                if (t != null)
+                {
+                    String displayName = context.getDisplayName();
+                    if (displayName == null)
+                    {
+                        displayName = context.getContextPath().substring(1);
+                    }
+                    Log.info("Error starting web application " + context.getDisplayName());
+                    Log.info(t.getMessage());
+                    Log.ignore(t);
                 }
             }
         }
