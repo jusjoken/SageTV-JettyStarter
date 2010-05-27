@@ -17,10 +17,14 @@
    <property name="jetty.lib.dir" location="lib"/>
    <property name="jetty.extlib.dir" location="extlib"/>
 
-   <condition property="implementation.version" value="${plugin.version}.${hudson.build.number}" else="${plugin.version}.${build.number}">
-      <isset property="hudson.build.number"/>
+   <condition property="plugin.impl.version" value="${plugin.version}.${build.number}" else="${plugin.version}">
+      <isset property="build.number"/>
    </condition>
 
+   <!--property name="download.url.location" value="http://download.sage.tv/plugins/jreichen/jetty"/-->
+   <property name="download.url.location" value="http://downloads.sourceforge.net/project/sageplugins/Jetty%20Starter/${plugin.version}/plugin"/>
+   <property name="download.url.params" value="?use_mirror="/>
+   
    <path id="lib.classpath.id">
       <!-- Include some jars in the classpath when compiling, but don't deliver them -->
       <fileset id="lib.fileset.id" dir="${jetty.lib.dir}" includes="*.jar">
@@ -47,7 +51,7 @@
       <ant antfile="build.xml" inheritall="false">
          <!-- The jar with the SageTV APIs is placed in the Hudson home directory -->
          <property name="sage.lib.dir" value="${hudson.home.dir}"/>
-         <property name="hudson.build.number" value="${env.BUILD_NUMBER}"/>
+         <property name="build.number" value="${env.BUILD_NUMBER}"/>
       </ant>
    </target>
 
@@ -96,7 +100,7 @@
             <attribute name="Specification-Title" value="Jetty Plugin for SageTV"/>
             <attribute name="Specification-Version" value="${plugin.version}"/>
             <attribute name="Implementation-Title" value="Jetty Plugin for SageTV"/>
-            <attribute name="Implementation-Version" value="${implementation.version}"/>
+            <attribute name="Implementation-Version" value="${plugin.impl.version}"/>
          </manifest>
       </jar>
    </target>
@@ -111,7 +115,7 @@
             <attribute name="Specification-Title" value="Jetty Web Applications for SageTV"/>
             <attribute name="Specification-Version" value="${plugin.version}"/>
             <attribute name="Implementation-Title" value="Jetty Web Applications for SageTV"/>
-            <attribute name="Implementation-Version" value="${implementation.version}"/>
+            <attribute name="Implementation-Version" value="${plugin.impl.version}"/>
          </manifest>
       </war>
    </target>
@@ -159,7 +163,7 @@
           <fileset refid="lib.fileset.id"/>
       </copy>
 
-      <zip basedir="${build.dir}/packages/jars" destfile="${build.dir}/packages/jetty-starter-jars-${implementation.version}.zip">
+      <zip basedir="${build.dir}/packages/jars" destfile="${build.dir}/packages/jetty-starter-jars-${plugin.impl.version}.zip">
       </zip>
    </target>
 
@@ -178,12 +182,12 @@
       </fixcrlf>
 
       <!-- Files that will be overwritten during the install -->
-      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-config-files-${implementation.version}.zip">
+      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-config-files-${plugin.impl.version}.zip">
           <exclude name="jetty/etc/realm.properties"/>
       </zip>
 
       <!-- Files that will not be overwritten during the install -->
-      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-user-config-files-${implementation.version}.zip">
+      <zip basedir="${build.dir}/packages/config-files" destfile="${build.dir}/packages/jetty-starter-user-config-files-${plugin.impl.version}.zip">
           <include name="jetty/etc/realm.properties"/>
       </zip>
    </target>
@@ -191,7 +195,7 @@
    <target name="package-context">
      <copy todir="${build.dir}/packages/context" file="resources/contexts/apps.xml"/>
 
-     <zip destfile="${build.dir}/packages/jetty-starter-webapp-context-file-${implementation.version}.zip">
+     <zip destfile="${build.dir}/packages/jetty-starter-webapp-context-file-${plugin.impl.version}.zip">
        <zipfileset prefix="jetty/contexts" dir="${build.dir}/packages/context"/>
      </zip>
    </target>
@@ -199,7 +203,7 @@
    <target name="package-war">
      <copy todir="${build.dir}/packages/war" file="${build.dir}/apps.war"/>
 
-     <zip destfile="${build.dir}/packages/jetty-starter-webapp-war-file-${implementation.version}.zip">
+     <zip destfile="${build.dir}/packages/jetty-starter-webapp-war-file-${plugin.impl.version}.zip">
        <zipfileset dir="${build.dir}/packages/war" prefix="jetty/webapps" />
      </zip>
    </target>
@@ -207,30 +211,34 @@
    <!-- Create the plugin's package -->
    <target name="dist-plugin" depends="package-jars, package-config-files, package-context, package-war">
 
-      <copy tofile="${build.dir}/packages/plugin-${implementation.version}.xml" file="resources/plugin/plugin.xml">
+      <copy tofile="${build.dir}/packages/plugin-${plugin.impl.version}.xml" file="resources/plugin/plugin.xml">
       </copy>
 
       <tstamp>
          <format property="last.modified" pattern="yyyy.MM.dd" />
       </tstamp>
 
-      <checksum file="${build.dir}/packages/jetty-starter-jars-${implementation.version}.zip"                property="md5.jars"/>
-      <checksum file="${build.dir}/packages/jetty-starter-config-files-${implementation.version}.zip"        property="md5.config-files"/>
-      <checksum file="${build.dir}/packages/jetty-starter-user-config-files-${implementation.version}.zip"   property="md5.user-config-files"/>
-      <checksum file="${build.dir}/packages/jetty-starter-webapp-context-file-${implementation.version}.zip" property="md5.context-file"/>
-      <checksum file="${build.dir}/packages/jetty-starter-webapp-war-file-${implementation.version}.zip"     property="md5.war-file"/>
+      <checksum file="${build.dir}/packages/jetty-starter-jars-${plugin.impl.version}.zip"                property="md5.jars"/>
+      <checksum file="${build.dir}/packages/jetty-starter-config-files-${plugin.impl.version}.zip"        property="md5.config-files"/>
+      <checksum file="${build.dir}/packages/jetty-starter-user-config-files-${plugin.impl.version}.zip"   property="md5.user-config-files"/>
+      <checksum file="${build.dir}/packages/jetty-starter-webapp-context-file-${plugin.impl.version}.zip" property="md5.context-file"/>
+      <checksum file="${build.dir}/packages/jetty-starter-webapp-war-file-${plugin.impl.version}.zip"     property="md5.war-file"/>
 
-      <replace file="${build.dir}/packages/plugin-${implementation.version}.xml" summary="yes">
+      <replace file="${build.dir}/packages/plugin-${plugin.impl.version}.xml" summary="yes">
          <replacefilter token="@@jar-checksum@@"              value="${md5.jars}"/>
          <replacefilter token="@@config-file-checksum@@"      value="${md5.config-files}"/>
          <replacefilter token="@@user-config-file-checksum@@" value="${md5.user-config-files}"/>
          <replacefilter token="@@context-file-checksum@@"     value="${md5.context-file}"/>
          <replacefilter token="@@war-file-checksum@@"         value="${md5.war-file}"/>
          <replacefilter token="@@last-modified@@"             value="${last.modified}"/>
-         <replacefilter token="@@plugin-version@@"            value="${implementation.version}"/>
+         <replacefilter token="@@download-url-location@@"     value="${download.url.location}"/>
+         <replacefilter token="@@download-url-params@@"       value="${download.url.params}"/>
+         <replacefilter token="@@plugin-version@@"            value="${plugin.version}"/>
+         <replacefilter token="@@build-number@@"              value="${build.number}"/>
+         <replacefilter token="@@plugin-impl-version@@"       value="${plugin.impl.version}"/>
       </replace>
 
-      <zip basedir="${build.dir}/packages" destfile="${dist.dir}/jetty-starter-plugin-${implementation.version}.zip">
+      <zip basedir="${build.dir}/packages" destfile="${dist.dir}/jetty-starter-plugin-${plugin.impl.version}.zip">
          <include name="*.zip"/>
          <include name="*.xml"/>
       </zip>
@@ -243,8 +251,8 @@
       <mkdir dir="${user.home}/.ant/lib" />
       <get src="http://repo1.maven.org/maven2/commons-net/commons-net/1.4.1/commons-net-1.4.1.jar" dest="${user.home}/.ant/lib/commons-net-1.4.1.jar" usetimestamp="true" />
 
-      <ftp remotedir="plugins/${author}/JARS" password="${sage.uploadpass}" server="download2.sagetv.com" userid="${sage.uploaduser}" action="mkdir" />
-      <ftp remotedir="plugins/${author}/JARS" password="${sage.uploadpass}" server="download2.sagetv.com" userid="${sage.uploaduser}" binary="true" action="send">
+      <ftp remotedir="plugins/${author}/JARS" password="${ftp.uploadpass}" server="download2.sagetv.com" userid="${ftp.uploaduser}" action="mkdir" />
+      <ftp remotedir="plugins/${author}/JARS" password="${ftp.uploadpass}" server="download2.sagetv.com" userid="${ftp.uploaduser}" binary="true" action="send">
          <fileset dir="${dist.dir}" />
       </ftp>
    </target>
