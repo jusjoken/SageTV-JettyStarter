@@ -13,6 +13,8 @@
   - Increase maximum HTML form size to support Google Web Toolkit applications.
   - Don't overwrite realm.properties when installed from plugin manager
   - Deliver updated default mime types in jetty/etc/mime.types.
+  - Log web application startup exception
+  - Fix HTTP 503 error when accessing items in the root context ('/').
 1.6 July 26, 2009
   - Upgrade Jetty from 6.1.11 to 6.1.19
   - Support user-specified mime types
