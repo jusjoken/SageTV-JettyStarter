@@ -109,7 +109,7 @@ public class JettyPlugin extends AbstractPlugin
                     PROP_NAME_SSL_ENABLE,
                     "false",
                     "Enable SSL",
-                    "Enable use of an encrypted HTTPS connection.  Keystore must be set up manually.")
+                    "Enable an encrypted HTTPS connection.  Keystore must be set up manually.  See http://tools.assembla.com/sageplugins/wiki/JettyPluginSSL.")
 //                    "Enable use of an encrypted HTTPS connection.  See http://tools.assembla.com/sageplugins/wiki/JettySSL.")
                     .setPersistence(new SslEnabledPersistence());
 
