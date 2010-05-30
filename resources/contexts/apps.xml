@@ -20,9 +20,9 @@
   <Set name="tempDirectory">
     <SystemProperty name="jetty.home" default="."/>/webapps/apps
   </Set>
-  <!--Set name="defaultsDescriptor">
+  <Set name="defaultsDescriptor">
     <SystemProperty name="jetty.home" default="."/>/etc/webdefault.xml
-  </Set-->
+  </Set>
   <Set name="extractWAR">true</Set>
   <Set name="copyWebDir">true</Set>
 
