@@ -14,6 +14,7 @@ import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandlerContainer;
+import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.log.Log;
 import org.mortbay.resource.Resource;
@@ -236,7 +237,10 @@ public class JettyInstance extends AbstractLifeCycle
             Log.info(t.getMessage());
             Log.ignore(t);
         }
-        
+
+//        does not work.  WebAppContexts are loaded immediately        
+//        configureTempDirs();
+
         // Start all Jetty LifeCycle objects
         for (Object configurationObject : configurationObjects)
         {
@@ -282,6 +286,64 @@ public class JettyInstance extends AbstractLifeCycle
             }
         }
     }
+
+    private void configureTempDirs()
+    {
+        Log.info("Number of configuration objects " + configurationObjects.size());
+        for (Object object : configurationObjects)
+        {
+            Log.info("object class " + object.getClass().getName());
+            if (object instanceof AbstractHandlerContainer)
+            {
+                Log.info("object is instance of AbstractHandlerContainer");
+                configureTempDirs((AbstractHandlerContainer) object);
+            }
+            else
+            {
+                Log.info("object is not instance of AbstractHandlerContainer");
+            }
+        }
+    }
+    
+    private void configureTempDirs(AbstractHandlerContainer handlers)
+    {
+        Log.info("Number of child handlers " + handlers.getChildHandlers().length);
+        for (Handler handler : handlers.getChildHandlers())
+        {
+            Log.info("handler class " + handler.getClass().getName());
+            if (handler instanceof WebAppContext)
+            {
+                WebAppContext context = (WebAppContext) handler;
+                Log.info("context.getDisplayName() " + context.getDisplayName());
+                Log.info("context.getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR) " + context.getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR));
+                Log.info("context.getBaseResource() " + context.getBaseResource());
+                Log.info("context.getDefaultsDescriptor() " + context.getDefaultsDescriptor());
+                Log.info("context.getInitParameter(\"useFileMappedBuffer\") " + context.getInitParameter("useFileMappedBuffer"));
+                Log.info("context.getInitParameter(\"cacheControl\") " + context.getInitParameter("cacheControl"));
+                Log.info("context.getInitParameter(\"cacheType\") " + context.getInitParameter("cacheType"));
+                Log.info("context.getResourceBase() " + context.getResourceBase());
+                Log.info("context.getTempDirectory() " + context.getTempDirectory());
+                Log.info("context.getWar() " + context.getWar());
+                Log.info("context.isTempWorkDirectory() " + context.isTempWorkDirectory());
+
+                if (WebAppContext.WEB_DEFAULTS_XML.equals(context.getDefaultsDescriptor()))
+                {
+                    context.setDefaultsDescriptor(new File(System.getProperty(JettyProperties.JETTY_HOME_PROPERTY), "etc/webdefault.xml").getAbsolutePath());
+                    Log.info("context.getDefaultsDescriptor() new " + context.getDefaultsDescriptor());
+                }
+            }
+
+            if (handler instanceof AbstractHandlerContainer)
+            {
+                Log.info("calling configureTempDirs recursively");
+                configureTempDirs((AbstractHandlerContainer) handler);
+            }
+            else
+            {
+                Log.info("handler is not instance of AstractHandlerContainer");
+            }
+        }
+    }
     
     /**
      * Print startup errors held in any WebAppContext object
@@ -301,11 +363,7 @@ public class JettyInstance extends AbstractLifeCycle
     {
         for (Handler handler : handlers.getChildHandlers())
         {
-            if (handler instanceof AbstractHandlerContainer)
-            {
-                printStartupErrors((AbstractHandlerContainer) handler);
-            }
-            else if (handler instanceof WebAppContext)
+            if (handler instanceof WebAppContext)
             {
                 WebAppContext context = (WebAppContext) handler;
                 Throwable t = context.getUnavailableException();
@@ -320,6 +378,10 @@ public class JettyInstance extends AbstractLifeCycle
                     Log.info(t.getMessage());
                     Log.ignore(t);
                 }
+            }
+            if (handler instanceof AbstractHandlerContainer)
+            {
+                printStartupErrors((AbstractHandlerContainer) handler);
             }
         }
     }
