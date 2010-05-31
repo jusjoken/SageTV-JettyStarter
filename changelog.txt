@@ -1,4 +1,4 @@
-2.0.1 May 30, 2010
+2.0.1 May 31, 2010
   - Fix Windows file-locking issue
   - Display message on /apps page when no web applications are installed
   - Convert end-of-line characters from LF (Linux) to CRLF (Windows) for the /apps files.
