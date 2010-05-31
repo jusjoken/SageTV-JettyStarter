@@ -40,16 +40,23 @@
       Server server = instance.getServers().get(0);
 
       Handler[] handlerArray = (server == null) ? null : server.getChildHandlersByClass(ContextHandler.class);
-      List<Handler> handlers = new ArrayList<Handler>();
-      for (Handler handler : handlerArray)
-      {
-         handlers.add(handler);
-      }
+      List<Handler> handlerList = new ArrayList<Handler>();
 
-      if (handlers != null)
+      if (handlerArray != null)
       {
+         for (int i = 0; handlerArray != null && i < handlerArray.length; i++)
+         {
+             ContextHandler context = (ContextHandler)handlerArray[i];
+             if (("/".equals(context.getContextPath())) ||
+                 ("/apps".equals(context.getContextPath())))
+             {
+                continue;
+             }
+             handlerList.add(context);
+         }
+
          // Sort the applications by name
-         Collections.sort(handlers, new Comparator<Object>()
+         Collections.sort(handlerList, new Comparator<Object>()
          {
             public int compare(Object handler1, Object handler2)
             {
@@ -71,83 +78,85 @@
 
       <ul>
       <%
-      for (int i = 0; handlers != null && i < handlers.size(); i++)
+      if (handlerList.size() == 0)
       {
-         ContextHandler context = (ContextHandler)handlers.get(i);
-         if (("/".equals(context.getContextPath())) ||
-             ("/apps".equals(context.getContextPath())))
+         out.write("<li class=\"appinfo\">No web applications are installed.</li>");
+      }
+      else
+      {
+         for (int i = 0; i < handlerList.size(); i++)
          {
-             continue;
-         }
+            ContextHandler context = (ContextHandler) handlerList.get(i);
 
-         Resource faviconResource = context.getResource("/favicon.ico");
-         String favIconPath = "/apps/favicon.ico";
-         if (faviconResource != null)
-         {
-            java.io.File file = faviconResource.getFile();
-            if (file != null)
+            Resource faviconResource = context.getResource("/favicon.ico");
+            String favIconPath = "/apps/favicon.ico";
+            if (faviconResource != null)
             {
-                if (file.exists())
-                {
-                    favIconPath = context.getContextPath() + "/favicon.ico";
-                }
+               java.io.File file = faviconResource.getFile();
+               if (file != null)
+               {
+                  if (file.exists())
+                  {
+                     favIconPath = context.getContextPath() + "/favicon.ico";
+                  }
+               }
             }
-         }
 
-         if (context.isRunning())
-         {
-            out.write("<li><a href=\"");
-            out.write(context.getContextPath());
-            if (context.getContextPath().length()>1 && context.getContextPath().endsWith("/"))
+            if (context.isRunning())
             {
-               out.write("/");
-            }
-            if (context.getAttribute("webpage") != null)
-            {
-               out.write(context.getAttribute("webpage").toString());
-            }
-            out.write("\">");
-            out.write("<div class=\"appimg\"><img class=\"app\" src=\"" + favIconPath + "\"/></div>");
-            out.write("<div class=\"appinfo\">");
-            if (context.getDisplayName() != null)
-            {
-               out.write(context.getDisplayName());
+               out.write("<li><a href=\"");
+               out.write(context.getContextPath());
+               if (context.getContextPath().length()>1 && context.getContextPath().endsWith("/"))
+               {
+                  out.write("/");
+               }
+               if (context.getAttribute("webpage") != null)
+               {
+                  out.write(context.getAttribute("webpage").toString());
+               }
+               out.write("\">");
+               out.write("<div class=\"appimg\"><img class=\"app\" src=\"" + favIconPath + "\"/></div>");
+               out.write("<div class=\"appinfo\">");
+               if (context.getDisplayName() != null)
+               {
+                  out.write(context.getDisplayName());
+               }
+               else
+               {
+                  out.write(context.getContextPath().substring(1));
+               }
+               out.write("<div class=\"appdetails\">");
+               if (context.getAttribute("pluginid") != null)
+               {
+                  Object plugin = PluginAPI.GetAvailablePluginForID(context.getAttribute("pluginid").toString());
+                  out.write("Version " + PluginAPI.GetPluginVersion(plugin));
+               }
+               out.write("</div></div></a></li>\n");
             }
             else
             {
-               out.write(context.getContextPath().substring(1));
+               out.write("<li>");
+               out.write("<img class=\"app\" src=\"" + favIconPath + "\"/>");
+               out.write("<div class=\"appinfo\">");
+               if (context.getDisplayName() != null)
+               {
+                  out.write(context.getDisplayName());
+               }
+               else
+               {
+                  out.write(context.getContextPath().substring(1));
+               }
+               out.write("<div class=\"appdetails\">");
+               if (context.isFailed())
+                  out.write("<br> [failed]");
+               if (context.isStopped())
+                  out.write("<br> [stopped]");
+               if (context.getAttribute("version") != null)
+               {
+                  out.write("Version " + context.getAttribute("version"));
+               }
+               out.write("</div></div></li>\n");
             }
-            out.write("<div class=\"appdetails\">");
-            if (context.getAttribute("pluginid") != null)
-            {
-               Object plugin = PluginAPI.GetAvailablePluginForID(context.getAttribute("pluginid").toString());
-               out.write("Version " + PluginAPI.GetPluginVersion(plugin));
-            }
-            out.write("</div></div></a></li>\n");
-         }
-         else
-         {
-            out.write("<li>");
-            out.write("<img class=\"app\" src=\"" + favIconPath + "\"/>");
-            out.write("<div class=\"appinfo\">");
-            if (context.getDisplayName() != null)
-            {
-               out.write(context.getDisplayName());
-            }
-            else
-            {
-               out.write(context.getContextPath().substring(1));
-            }
-            out.write("<div class=\"appdetails\">");
-            if (context.isFailed())
-               out.write("<br> [failed]");
-            if (context.isStopped())
-               out.write("<br> [stopped]");
-            if (context.getAttribute("version") != null)
-            {
-               out.write("Version " + context.getAttribute("version"));
-            }
-            out.write("</div></div></li>\n");
          }
       }
       %>
