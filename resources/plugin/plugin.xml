@@ -18,11 +18,16 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Desktop>false</Desktop>
   <ResourcePath>jetty</ResourcePath>
   <Screenshot title="Web Application List">http://sageplugins.sourceforge.net/screenshots/jetty/SageTVWebApps.png</Screenshot>
-  <Webpage title="Forum Support Thread">http://forums.sagetv.com/forums/showthread.php?t=37099</Webpage>
+  <Webpage title="Jetty Plugin 2.0 Forum Support Thread">http://forums.sagetv.com/forums/showthread.php?t=48818</Webpage>
   <Webpage title="Jetty Plugin Wiki">http://tools.assembla.com/sageplugins/wiki/Jetty</Webpage>
   <Webpage title="Jetty Home Page - Mortbay Consulting">http://jetty.codehaus.org/jetty/</Webpage>
   <ReleaseNotes>
     <![CDATA[
+Version 2.0.1
+1. Fix Windows file-locking issue
+2. Display message on /apps page when no web applications are installed
+3. Convert end-of-line characters from LF (Linux) to CRLF (Windows) for the /apps files.
+
 Version 2.0
 1. Added SageTV Web Applications webapp as a Jetty home page.
 2. Add properties to display HTTP and HTTPS URLs for web server.

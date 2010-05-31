@@ -1,3 +1,7 @@
+2.0.1 May 30, 2010
+  - Fix Windows file-locking issue
+  - Display message on /apps page when no web applications are installed
+  - Convert end-of-line characters from LF (Linux) to CRLF (Windows) for the /apps files.
 2.0 May 28, 2010
   - Support for SageTV 7 Plugin Manager
     - Configuration options for port numbers, display web server URLs, SSL, default username and password, logging level, and UPnP router configuration
