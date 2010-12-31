@@ -47,7 +47,7 @@ public class JettyStarterLogger implements Logger
 
     public JettyStarterLogger()
     {
-        stdErrLog = new StdErrLog();
+        stdErrLog = new SageStdErrLog();
     }
 
     public void debug(String msg, Throwable ex)
