@@ -146,7 +146,7 @@
                   </New>
                 </Item>
                 <Item>
-                  <New id="Contexts" class="org.mortbay.jetty.handler.ContextHandlerCollection"/>
+                  <New id="Contexts" class="sagex.jetty.lifecycle.SageContextHandlerCollection"/>
                 </Item>
                 <Item>
                   <New id="DefaultHandler" class="org.mortbay.jetty.handler.DefaultHandler">
