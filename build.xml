@@ -5,7 +5,7 @@
    <buildnumber/>
    <property file="build.properties"/>
    
-   <property name="plugin.version" value="2.0.1"/>
+   <property name="plugin.version" value="2.1.0"/>
 
    <property name="src.dir"   location="src"/>
    <property name="build.dir" location="build"/>

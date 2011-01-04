@@ -1,3 +1,7 @@
+2.1.0 January 3, 2011
+  - SageTV v7-style interface for 'apps' web application (switch from blue to gray as well as other style changes)
+  - Remove duplicate timestamps on Jetty's log entries in the SageTV log file.
+  - Override Jetty's war file extraction logic to address HTTP 404 and 503 errors.
 2.0.1 May 31, 2010
   - Fix Windows file-locking issue
   - Display message on /apps page when no web applications are installed

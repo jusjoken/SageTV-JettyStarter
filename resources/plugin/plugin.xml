@@ -4,7 +4,7 @@
   <Identifier>Jetty</Identifier>
   <Description>
     <![CDATA[
-The Jetty Web Server Plugin provides a platform for SageTV web application plugins.
+Provides a platform for SageTV web application plugins.
  
 Currently available web applications can manage SageTV recordings from desktop or mobile web browsers, manage fanart and metadata, provide remote web services for SageTV, configure batch job processing, and more.
  
@@ -23,6 +23,11 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Webpage title="Jetty Home Page - Mortbay Consulting">http://jetty.codehaus.org/jetty/</Webpage>
   <ReleaseNotes>
     <![CDATA[
+Version 2.1.0
+1. SageTV v7-style interface for 'apps' web application (switch from blue to gray as well as other style changes)
+2. Remove duplicate timestamps on Jetty's log entries in the SageTV log file.
+3. Override Jetty's war file extraction logic to address HTTP 404 and 503 errors.
+ 
 Version 2.0.1
 1. Fix Windows file-locking issue
 2. Display message on /apps page when no web applications are installed
