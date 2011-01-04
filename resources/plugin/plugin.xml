@@ -32,7 +32,7 @@ Version 2.0.1
 1. Fix Windows file-locking issue
 2. Display message on /apps page when no web applications are installed
 3. Convert end-of-line characters from LF (Linux) to CRLF (Windows) for the /apps files.
-
+ 
 Version 2.0
 1. Added SageTV Web Applications webapp as a Jetty home page.
 2. Add properties to display HTTP and HTTPS URLs for web server.
