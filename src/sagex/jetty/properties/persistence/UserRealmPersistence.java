@@ -144,6 +144,12 @@ public class UserRealmPersistence implements IPropertyPersistence
                         password = Password.obfuscate(value);
                     }
                     roles = m.group(ROLES_REGEX_GROUP);
+                    
+                    // make sure there's at least the 'user' role
+                    if ((roles == null) || (roles.trim().equals(",")) || (roles.trim().length() == 0))
+                    {
+                        roles = ",user";
+                    }
 
                     propertyList.set(i, user + ": " + password + roles);
                     updated = true;
