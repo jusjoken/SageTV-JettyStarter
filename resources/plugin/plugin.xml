@@ -23,6 +23,11 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Webpage title="Jetty Home Page - Mortbay Consulting">http://jetty.codehaus.org/jetty/</Webpage>
   <ReleaseNotes>
     <![CDATA[
+Version 2.2.0
+1. Minor apps web page formatting changes
+2. Add user to the 'user' role if none specified in realm.properties
+3. Fix displayed version of installed plugin
+  
 Version 2.1.0
 1. SageTV v7-style interface for 'apps' web application (switch from blue to gray as well as other style changes)
 2. Remove duplicate timestamps on Jetty's log entries in the SageTV log file.
