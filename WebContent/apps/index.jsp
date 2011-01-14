@@ -96,10 +96,17 @@
       }
       else
       {
+         Object[] installedPlugins = PluginAPI.GetInstalledPlugins();
+
          for (int i = 0; i < handlerList.size(); i++)
          {
             ContextHandler context = (ContextHandler) handlerList.get(i);
 
+            Object pluginIdAttribute = context.getAttribute("pluginid");
+            String pluginId = (pluginIdAttribute == null) ? null : pluginIdAttribute.toString();
+            Object webpageAttribute = context.getAttribute("webpage");
+            String webpage = (webpageAttribute == null) ? null : webpageAttribute.toString();
+            
             Resource faviconResource = context.getResource("/favicon.ico");
             String favIconPath = "/apps/favicon.ico";
             if (faviconResource != null)
@@ -112,6 +119,22 @@
                      favIconPath = context.getContextPath() + "/favicon.ico";
                   }
                }
+            }
+
+            String installedPluginVersion = null;
+            if (pluginId != null)
+            {
+                for (Object installedPlugin : installedPlugins)
+                {
+                    String installedPluginName = PluginAPI.GetPluginName(installedPlugin);
+                    String installedPluginId = PluginAPI.GetPluginIdentifier(installedPlugin);
+                    
+                    if (pluginId.equals(installedPluginId))
+                    {
+                        installedPluginVersion = PluginAPI.GetPluginVersion(installedPlugin);
+                        break;
+                    }
+                }
             }
 
             if (context.isRunning())
@@ -138,10 +161,9 @@
                   out.write(context.getContextPath().substring(1));
                }
                out.write("<div class=\"appdetails\">");
-               if (context.getAttribute("pluginid") != null)
+               if (installedPluginVersion != null)
                {
-                  Object plugin = PluginAPI.GetAvailablePluginForID(context.getAttribute("pluginid").toString());
-                  out.write("Version " + PluginAPI.GetPluginVersion(plugin));
+                   out.write("Version " + installedPluginVersion + "\n");
                }
                out.write("</div></div></a></li>\n");
             }
@@ -163,9 +185,9 @@
                   out.write("<br> [failed]");
                if (context.isStopped())
                   out.write("<br> [stopped]");
-               if (context.getAttribute("version") != null)
+               if (installedPluginVersion != null)
                {
-                  out.write("Version " + context.getAttribute("version"));
+                   out.write("Version " + installedPluginVersion + "\n");
                }
                out.write("</div></div></li>\n");
             }
