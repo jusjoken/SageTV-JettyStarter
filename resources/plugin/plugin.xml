@@ -23,6 +23,10 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Webpage title="Jetty Home Page - Mortbay Consulting">http://jetty.codehaus.org/jetty/</Webpage>
   <ReleaseNotes>
     <![CDATA[
+Version 2.2.1
+1. Change logging from stderr to stdout.  It appears something else is hijacking stderr.
+2. Add logging about classloader and temporary web app directory
+  
 Version 2.2.0
 1. Minor apps web page formatting changes
 2. Add user to the 'user' role if none specified in realm.properties
