@@ -21,6 +21,15 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
 
     public void lifeCycleStarted(LifeCycle event)
     {
+        if (event instanceof WebAppContext)
+        {
+            WebAppContext context = (WebAppContext) event;
+
+            Log.debug("Started web app: " + context);
+            Log.debug("Web app class loader after app started: " + context.getClassLoader() + 
+                    "@" + Integer.toHexString(context.getClassLoader().hashCode()));
+        }
+
         printUnavailableFailure(event);
     }
 
@@ -29,6 +38,10 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
         if (event instanceof WebAppContext)
         {
             WebAppContext context = (WebAppContext) event;
+
+            Log.debug("Starting web app: " + context);
+            Log.debug("Web app class loader before app started: " + context.getClassLoader() +
+                    ((context.getClassLoader() == null) ? "" : "@" + Integer.toHexString(context.getClassLoader().hashCode())));
             
             File tempDir = context.getTempDirectory();
             // only delete dirs from the webapps dir as a sanity check
@@ -79,7 +92,16 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
         for (File currentTempDir : tempDirs)
         {
             Log.debug("Delete temporary web app directory: " + currentTempDir.getAbsolutePath());
-            IO.delete(currentTempDir);
+            boolean deleteResult = IO.delete(currentTempDir);
+            
+            if (deleteResult)
+            {
+                Log.debug("Successfully deleted temporary web app directory: " + currentTempDir.getAbsolutePath());
+            }
+            else
+            {
+                Log.debug("Failed to delete temporary web app directory: " + currentTempDir.getAbsolutePath());
+            }
         }
     }
 
@@ -101,6 +123,7 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
             tempDir = new File(defaultTempDir.getAbsolutePath() + "_" + i++);
         }
 
+        Log.debug("Setting temporary web app directory: " + tempDir.getAbsolutePath());
         context.setTempDirectory(tempDir);
     }
 
