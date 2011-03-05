@@ -2,11 +2,10 @@ package sagex.jetty.log;
 
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
-import org.mortbay.log.StdErrLog;
 
 public class JettyStarterLogger implements Logger
 {
-    private StdErrLog stdErrLog = null;
+    private Logger logger = null;
 
     public static void init()
     {
@@ -47,19 +46,19 @@ public class JettyStarterLogger implements Logger
 
     public JettyStarterLogger()
     {
-        stdErrLog = new SageStdErrLog();
+        logger = new SageStdOutLog();
     }
 
     public void debug(String msg, Throwable ex)
     {
         if (msg == null) msg = "Null Message";
-        stdErrLog.debug(msg, ex);
+        logger.debug(msg, ex);
     }
 
     public void debug(String msg, Object arg1, Object arg2)
     {
         if (msg == null) msg = "Null Message";
-        stdErrLog.debug(msg, arg1, arg2);
+        logger.debug(msg, arg1, arg2);
     }
 
     public Logger getLogger(String name)
@@ -70,28 +69,28 @@ public class JettyStarterLogger implements Logger
     public void info(String msg, Object arg1, Object arg2)
     {
         if (msg == null) msg = "Null Message";
-        stdErrLog.info(msg, arg1, arg2);
+        logger.info(msg, arg1, arg2);
     }
 
     public boolean isDebugEnabled()
     {
-        return stdErrLog.isDebugEnabled();
+        return logger.isDebugEnabled();
     }
 
     public void setDebugEnabled(boolean enabled)
     {
-        stdErrLog.setDebugEnabled(enabled);
+        logger.setDebugEnabled(enabled);
     }
 
     public void warn(String msg, Throwable ex)
     {
         if (msg == null) msg = "Null Message";
-        stdErrLog.warn(msg, ex);
+        logger.warn(msg, ex);
     }
 
     public void warn(String msg, Object arg1, Object arg2)
     {
         if (msg == null) msg = "Null Message";
-        stdErrLog.warn(msg, arg1, arg2);
+        logger.warn(msg, arg1, arg2);
     }
 }
