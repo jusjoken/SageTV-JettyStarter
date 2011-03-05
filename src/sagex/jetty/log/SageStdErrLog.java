@@ -83,7 +83,7 @@ public class SageStdErrLog extends StdErrLog
         if ((name==null && this.name==null) ||
             (name!=null && name.equals(this.name)))
             return this;
-        return new StdErrLog(name);
+        return new SageStdErrLog(name);
     }
     
     public String toString()
