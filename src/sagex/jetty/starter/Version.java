@@ -22,8 +22,9 @@ public enum Version
     VERSION_2_1_0      ("2.1.0"), // Sage v7
     VERSION_2_2_0      ("2.2.0"), // Sage v7
     VERSION_2_2_1      ("2.2.1"), // Sage v7
+    VERSION_2_3_0      ("2.3.0"), // Sage v7
     
-    CURRENT_VERSION    (VERSION_2_2_1.version);
+    CURRENT_VERSION    (VERSION_2_3_0.version);
     
     private String version = null;
 
