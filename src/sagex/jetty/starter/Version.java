@@ -23,8 +23,9 @@ public enum Version
     VERSION_2_2_0      ("2.2.0"), // Sage v7
     VERSION_2_2_1      ("2.2.1"), // Sage v7
     VERSION_2_3_0      ("2.3.0"), // Sage v7
-    
-    CURRENT_VERSION    (VERSION_2_3_0.version);
+    VERSION_3_0_0      ("3.0.0"), // Sage v7, Java 7 (with support for Java 8)
+
+    CURRENT_VERSION    (VERSION_3_0_0.version);
     
     private String version = null;
 
