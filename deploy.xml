@@ -1,4 +1,8 @@
 <!--
+    Obsolete file for creating deployment artifacts for SageTV v6 and earlier.
+-->
+
+<!--
     zip file structure
     
     JettyStarter.properties
