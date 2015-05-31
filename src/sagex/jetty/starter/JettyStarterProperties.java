@@ -8,7 +8,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 import sagex.jetty.properties.JettyProperties;
 
@@ -122,13 +122,13 @@ public class JettyStarterProperties
             {
                 fis = new FileInputStream(jettyPropertiesFile);
                 starterProperties.load(fis);
-                Log.info("Loaded JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
+                Log.getLog().info("Loaded JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
             }
             catch (IOException e)
             {
-                Log.info("Unable to load JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
-                Log.info(e.getMessage());
-                Log.ignore(e);
+                Log.getLog().info("Unable to load JettyStarter properties from " + jettyPropertiesFile.getAbsolutePath());
+                Log.getLog().info(e.getMessage(), e);
+                Log.getLog().ignore(e);
             }
             finally
             {
@@ -140,8 +140,8 @@ public class JettyStarterProperties
                     }
                     catch (IOException e)
                     {
-                        Log.info(e.getMessage());
-                        Log.ignore(e);
+                        Log.getLog().info(e.getMessage(), e);
+                        Log.getLog().ignore(e);
                     }
                 }
             }
@@ -175,7 +175,7 @@ public class JettyStarterProperties
 
     /**
      * Replaces Java system properties in the values of the properties object with their actual values.
-     * @param properties
+     * @param value
      */
     private String evaluateProperties(String value)
     {

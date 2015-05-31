@@ -8,10 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.mortbay.io.Buffer;
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
-public class MimeTypes extends org.mortbay.jetty.MimeTypes
+public class MimeTypes extends org.eclipse.jetty.http.MimeTypes
 {
     private static String MIME_FILE_LINE_DELIMITERS = "[\\t ]+"; // tab or space
 
@@ -102,7 +101,7 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
     }
 
     @Override
-    public Buffer getMimeByExtension(String arg0)
+    public String getMimeByExtension(String arg0)
     {
         // lazy loading of mime types file(s)
         setupMimeTypes();
@@ -160,7 +159,7 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
                 }
                 else
                 {
-                    Log.info("mime.types file not found in override location " +
+                    Log.getLog().info("mime.types file not found in override location " +
                             overrideMimeTypesFile.getAbsolutePath() + ".  Checking default locations.");
                 }
             }
@@ -176,14 +175,14 @@ public class MimeTypes extends org.mortbay.jetty.MimeTypes
         {
             if (getLocation() == null)
             {
-                Log.info("mime.types file for Jetty plugin not found in " +
+                Log.getLog().info("mime.types file for Jetty plugin not found in " +
                     "user location " + userMimeTypesFile.getAbsolutePath() + " or " +
                     "default plugin location " + defaultMimeTypesFile.getAbsolutePath() + ". " +
                     "Jetty's default mime types will be the only types available.");
             }
             else
             {
-                Log.info("mime.types file for Jetty plugin not found in " +
+                Log.getLog().info("mime.types file for Jetty plugin not found in " +
                     "user location " + userMimeTypesFile.getAbsolutePath() + ", " +
                     "default plugin location " + defaultMimeTypesFile.getAbsolutePath() + ", or " +
                     "web application override location + " + overrideMimeTypesFile.getAbsolutePath() + ", " +

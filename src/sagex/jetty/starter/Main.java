@@ -1,6 +1,6 @@
 package sagex.jetty.starter;
 
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 import sagex.jetty.log.JettyStarterLogger;
 import sagex.jetty.properties.JettyStarterPropertiesImpl;
@@ -12,7 +12,7 @@ public class Main implements Runnable
         // Handle all logging for Jetty and Jetty Starter
         JettyStarterLogger.init();
 
-        Log.info("Jetty Starter plugin version " + Main.class.getPackage().getImplementationVersion());
+        Log.getLog().info("Jetty Starter plugin version " + Main.class.getPackage().getImplementationVersion());
     }
     
     /**
@@ -29,8 +29,8 @@ public class Main implements Runnable
         }
         catch (Exception e)
         {
-            Log.info(e.getMessage());
-            Log.ignore(e);
+            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().ignore(e);
         }
     }
 }

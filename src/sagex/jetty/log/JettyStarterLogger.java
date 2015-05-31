@@ -1,7 +1,8 @@
 package sagex.jetty.log;
 
-import org.mortbay.log.Log;
-import org.mortbay.log.Logger;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+
 
 public class JettyStarterLogger implements Logger
 {
@@ -11,10 +12,10 @@ public class JettyStarterLogger implements Logger
     {
         // Handle all logging for Jetty and Jetty Starter
         // EXCEPTION, DEBUG, VERBOSE, IGNORED
-        System.setProperty("org.mortbay.log.class", JettyStarterLogger.class.getName());
+        System.setProperty("org.eclipse.jetty.util.log.class", JettyStarterLogger.class.getName());
         
         // Initialize Jetty's logging through Log's static initializer.  By setting the
-        // property "org.mortbay.log.class" to this class, all logging will be routed
+        // property "org.eclipse.jetty.util.log.class" to this class, all logging will be routed
         // through this class.
         Log.getLog();
         
@@ -38,7 +39,8 @@ public class JettyStarterLogger implements Logger
 //    {
 //        this("org.mortbay.log");
 //    }
-//    
+//
+
 //    public JettyStarterLogger(String name)
 //    {
 //        logger = org.slf4j.LoggerFactory.getLogger( name );
@@ -49,6 +51,7 @@ public class JettyStarterLogger implements Logger
         logger = new SageStdOutLog();
     }
 
+    @Override
     public void debug(String msg, Throwable ex)
     {
         if (msg == null) msg = "Null Message";
@@ -61,6 +64,33 @@ public class JettyStarterLogger implements Logger
         logger.debug(msg, arg1, arg2);
     }
 
+    @Override
+    public void debug(String msg, Object... objects)
+    {
+        if (msg == null) msg = "Null Message";
+        logger.debug(msg, objects);
+    }
+
+    @Override
+    public void debug(String msg, long l)
+    {
+        if (msg == null) msg = "Null Message";
+        logger.debug(msg, l);
+    }
+
+    @Override
+    public String getName()
+    {
+        return logger.getName();
+    }
+
+    @Override
+    public void debug(Throwable throwable)
+    {
+        logger.debug(throwable);
+    }
+
+    @Override
     public Logger getLogger(String name)
     {
         return this;
@@ -72,16 +102,39 @@ public class JettyStarterLogger implements Logger
         logger.info(msg, arg1, arg2);
     }
 
+    @Override
+    public void info(String msg, Object... objects)
+    {
+        if (msg == null) msg = "Null Message";
+        logger.info(msg, objects);
+    }
+
+    @Override
+    public void info(Throwable throwable)
+    {
+        logger.info(throwable);
+    }
+
+    @Override
+    public void info(String msg, Throwable throwable)
+    {
+        if (msg == null) msg = "Null Message";
+        logger.info(msg, throwable);
+    }
+
+    @Override
     public boolean isDebugEnabled()
     {
         return logger.isDebugEnabled();
     }
 
+    @Override
     public void setDebugEnabled(boolean enabled)
     {
         logger.setDebugEnabled(enabled);
     }
 
+    @Override
     public void warn(String msg, Throwable ex)
     {
         if (msg == null) msg = "Null Message";
@@ -92,5 +145,24 @@ public class JettyStarterLogger implements Logger
     {
         if (msg == null) msg = "Null Message";
         logger.warn(msg, arg1, arg2);
+    }
+
+    @Override
+    public void warn(String msg, Object... objects)
+    {
+        if (msg == null) msg = "Null Message";
+        logger.warn(msg, objects);
+    }
+
+    @Override
+    public void warn(Throwable throwable)
+    {
+        logger.warn(throwable);
+    }
+
+    @Override
+    public void ignore(Throwable throwable)
+    {
+        logger.ignore(throwable);
     }
 }

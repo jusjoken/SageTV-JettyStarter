@@ -3,22 +3,18 @@ package sagex.jetty.starter;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
-import org.mortbay.component.AbstractLifeCycle;
-import org.mortbay.component.LifeCycle;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.AbstractHandlerContainer;
-import org.mortbay.jetty.servlet.ServletHandler;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.log.Log;
-import org.mortbay.resource.Resource;
-import org.mortbay.xml.XmlConfiguration;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.AbstractHandlerContainer;
+import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.resource.Resource;
+import org.eclipse.jetty.xml.XmlConfiguration;
 
 import sagex.jetty.properties.JettyProperties;
 
@@ -110,7 +106,13 @@ public class JettyInstance extends AbstractLifeCycle
                     // Properties come from JettyStarter.properties and other properties files 
                     // specified in the config files property in JettyStarter.properties.
                     // Usually it's just JettyStarter.properties.
-                    configuration.setProperties(properties);
+                    // Jetty 9 doesn't have configuration.setProperties(properties) so we need to do it the long way.
+                    Map<String, String> xmlConfigProperties = configuration.getProperties();
+                    Set<Map.Entry<Object, Object>> propertySet = properties.entrySet();
+                    for (Map.Entry<Object, Object> entry : propertySet)
+                    {
+                        xmlConfigProperties.put((String) entry.getKey(), (String) entry.getValue());
+                    }
                 }
 
                 Object object = configuration.configure();
@@ -166,7 +168,7 @@ public class JettyInstance extends AbstractLifeCycle
     @Override
     protected void doStart() throws Exception
     {
-        Log.info("Starting Jetty");
+        Log.getLog().info("Starting Jetty");
         try
         {
             JettyProperties jettyProperties = jettyPropertiesClass.newInstance();
@@ -175,38 +177,39 @@ public class JettyInstance extends AbstractLifeCycle
             String logLevel = jettyProperties.getProperty(JettyProperties.JETTY_LOG_LEVEL);
             if ((logLevel == null) || (logLevel.toLowerCase().equals("info")))
             {
-                Log.info("Jetty Plugin log level: INFO");
+                Log.getLog().info("Jetty Plugin log level: INFO");
                 Log.getLog().setDebugEnabled(false);
-                Log.__verbose = false;
             }
             else if (logLevel.toLowerCase().equals("debug"))
             {
-                Log.info("Jetty Plugin log level: DEBUG");
+                Log.getLog().info("Jetty Plugin log level: DEBUG");
                 Log.getLog().setDebugEnabled(true);
-                Log.__verbose = false;
             }
-            else if (logLevel.toLowerCase().equals("verbose"))
+            else if (logLevel.toLowerCase().equals("warn"))
             {
-                Log.info("Jetty Plugin log level: VERBOSE");
-                Log.getLog().setDebugEnabled(true);
-                Log.__verbose = true;
+                Log.getLog().info("Jetty Plugin log level: WARN");
+                Log.getLog().setDebugEnabled(false);
+            }
+            else if (logLevel.toLowerCase().equals("ignore"))
+            {
+                Log.getLog().info("Jetty Plugin log level: IGNORE");
+                Log.getLog().setDebugEnabled(false);
             }
             else
             {
                 // the default is INFO
-                Log.info("Jetty Plugin log level: INFO");
+                Log.getLog().info("Jetty Plugin log level: INFO");
                 Log.getLog().setDebugEnabled(false);
-                Log.__verbose = false;
             }
 
             // Print properties
-            if (Log.isDebugEnabled())
+            if (Log.getLog().isDebugEnabled())
             {
-                Log.debug("Jetty properties provided by class " + jettyPropertiesClass.getName());
+                Log.getLog().debug("Jetty properties provided by class " + jettyPropertiesClass.getName());
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 jettyProperties.getProperties().list(pw);
-                Log.debug(sw.getBuffer().toString());
+                Log.getLog().debug(sw.getBuffer().toString());
             }
             
             // make sure the log dir exists
@@ -219,7 +222,7 @@ public class JettyInstance extends AbstractLifeCycle
             }
 
             // get jetty config files
-            String configFiles= jettyProperties.getProperty(JettyProperties.JETTY_CONFIG_FILES_PROPERTY);
+            String configFiles = jettyProperties.getProperty(JettyProperties.JETTY_CONFIG_FILES_PROPERTY);
 
             // don't parse on spaces because SageTV is installed in C:\Program Files in Windows
             String[] configFileArgs = JettyProperties.parseConfigFilesSetting(configFiles);
@@ -228,14 +231,14 @@ public class JettyInstance extends AbstractLifeCycle
             {
                 msg += " '" + configFileArgs[i] + "'";
             }
-            Log.debug(msg);
+            Log.getLog().debug(msg);
 
             JettyInstance.getInstance().configureInternal(configFileArgs, jettyProperties.getProperties());
         }
         catch (Throwable t)
         {
-            Log.info(t.getMessage());
-            Log.ignore(t);
+            Log.getLog().info(t.getMessage(), t);
+            Log.getLog().ignore(t);
         }
 
 //        does not work.  WebAppContexts are loaded immediately        
@@ -268,7 +271,7 @@ public class JettyInstance extends AbstractLifeCycle
     @Override
     protected void doStop() throws Exception
     {
-        Log.info("Stopping Jetty");
+        Log.getLog().info("Stopping Jetty");
         for (Object configurationObject : configurationObjects)
         {
             if (configurationObject instanceof LifeCycle)
@@ -289,58 +292,57 @@ public class JettyInstance extends AbstractLifeCycle
 
     private void configureTempDirs()
     {
-        Log.info("Number of configuration objects " + configurationObjects.size());
+        Log.getLog().info("Number of configuration objects " + configurationObjects.size());
         for (Object object : configurationObjects)
         {
-            Log.info("object class " + object.getClass().getName());
+            Log.getLog().info("object class " + object.getClass().getName());
             if (object instanceof AbstractHandlerContainer)
             {
-                Log.info("object is instance of AbstractHandlerContainer");
+                Log.getLog().info("object is instance of AbstractHandlerContainer");
                 configureTempDirs((AbstractHandlerContainer) object);
             }
             else
             {
-                Log.info("object is not instance of AbstractHandlerContainer");
+                Log.getLog().info("object is not instance of AbstractHandlerContainer");
             }
         }
     }
     
     private void configureTempDirs(AbstractHandlerContainer handlers)
     {
-        Log.info("Number of child handlers " + handlers.getChildHandlers().length);
+        Log.getLog().info("Number of child handlers " + handlers.getChildHandlers().length);
         for (Handler handler : handlers.getChildHandlers())
         {
-            Log.info("handler class " + handler.getClass().getName());
+            Log.getLog().info("handler class " + handler.getClass().getName());
             if (handler instanceof WebAppContext)
             {
                 WebAppContext context = (WebAppContext) handler;
-                Log.info("context.getDisplayName() " + context.getDisplayName());
-                Log.info("context.getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR) " + context.getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR));
-                Log.info("context.getBaseResource() " + context.getBaseResource());
-                Log.info("context.getDefaultsDescriptor() " + context.getDefaultsDescriptor());
-                Log.info("context.getInitParameter(\"useFileMappedBuffer\") " + context.getInitParameter("useFileMappedBuffer"));
-                Log.info("context.getInitParameter(\"cacheControl\") " + context.getInitParameter("cacheControl"));
-                Log.info("context.getInitParameter(\"cacheType\") " + context.getInitParameter("cacheType"));
-                Log.info("context.getResourceBase() " + context.getResourceBase());
-                Log.info("context.getTempDirectory() " + context.getTempDirectory());
-                Log.info("context.getWar() " + context.getWar());
-                Log.info("context.isTempWorkDirectory() " + context.isTempWorkDirectory());
+                Log.getLog().info("context.getDisplayName() " + context.getDisplayName());
+//                Log.getLog().info("context.getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR) " + context.getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR));
+                Log.getLog().info("context.getBaseResource() " + context.getBaseResource());
+                Log.getLog().info("context.getDefaultsDescriptor() " + context.getDefaultsDescriptor());
+                Log.getLog().info("context.getInitParameter(\"useFileMappedBuffer\") " + context.getInitParameter("useFileMappedBuffer"));
+                Log.getLog().info("context.getInitParameter(\"cacheControl\") " + context.getInitParameter("cacheControl"));
+                Log.getLog().info("context.getInitParameter(\"cacheType\") " + context.getInitParameter("cacheType"));
+                Log.getLog().info("context.getResourceBase() " + context.getResourceBase());
+                Log.getLog().info("context.getTempDirectory() " + context.getTempDirectory());
+                Log.getLog().info("context.getWar() " + context.getWar());
 
                 if (WebAppContext.WEB_DEFAULTS_XML.equals(context.getDefaultsDescriptor()))
                 {
                     context.setDefaultsDescriptor(new File(System.getProperty(JettyProperties.JETTY_HOME_PROPERTY), "etc/webdefault.xml").getAbsolutePath());
-                    Log.info("context.getDefaultsDescriptor() new " + context.getDefaultsDescriptor());
+                    Log.getLog().info("context.getDefaultsDescriptor() new " + context.getDefaultsDescriptor());
                 }
             }
 
             if (handler instanceof AbstractHandlerContainer)
             {
-                Log.info("calling configureTempDirs recursively");
+                Log.getLog().info("calling configureTempDirs recursively");
                 configureTempDirs((AbstractHandlerContainer) handler);
             }
             else
             {
-                Log.info("handler is not instance of AstractHandlerContainer");
+                Log.getLog().info("handler is not instance of AstractHandlerContainer");
             }
         }
     }
@@ -374,9 +376,9 @@ public class JettyInstance extends AbstractLifeCycle
                     {
                         displayName = context.getContextPath().substring(1);
                     }
-                    Log.info("Error starting web application " + context.getDisplayName());
-                    Log.info(t.getMessage());
-                    Log.ignore(t);
+                    Log.getLog().info("Error starting web application " + context.getDisplayName());
+                    Log.getLog().info(t.getMessage(), t);
+                    Log.getLog().ignore(t);
                 }
             }
             if (handler instanceof AbstractHandlerContainer)

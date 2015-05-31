@@ -1,7 +1,7 @@
 package sagex.jetty.lifecycle;
 
-import org.mortbay.jetty.Handler;
-import org.mortbay.jetty.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 
 /**
  * Provides a hook into the deployment process (via jetty.xml) without requiring

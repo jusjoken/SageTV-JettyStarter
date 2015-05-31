@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mortbay.jetty.security.Password;
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.security.Password;
+import org.eclipse.jetty.util.log.Log;
 
 import sagex.jetty.starter.JettyPlugin;
 import sagex.plugin.IPropertyPersistence;
@@ -88,8 +88,8 @@ public class UserRealmPersistence implements IPropertyPersistence
         }
         catch (IOException e)
         {
-            Log.info(e.getMessage());
-            Log.ignore(e);
+            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().ignore(e);
         }
         finally
         {
@@ -176,8 +176,8 @@ public class UserRealmPersistence implements IPropertyPersistence
         }
         catch (Exception e)
         {
-            Log.info(e.getMessage());
-            Log.ignore(e);
+            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().ignore(e);
         }
         finally
         {
@@ -196,8 +196,8 @@ public class UserRealmPersistence implements IPropertyPersistence
             }
             catch (IOException e)
             {
-                Log.info(e.getMessage());
-                Log.ignore(e);
+                Log.getLog().info(e.getMessage(), e);
+                Log.getLog().ignore(e);
             }
         }
     }

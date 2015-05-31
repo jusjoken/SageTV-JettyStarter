@@ -1,6 +1,6 @@
 package sagex.jetty.properties.visibility;
 
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 import sagex.api.Global;
 import sagex.jetty.properties.persistence.UPnPConfiguration;
@@ -20,7 +20,7 @@ public class LocatorURLPropertyVisibility implements IPropertyVisibility
 
     public boolean isVisible()
     {
-        Log.debug("Entering LocatorURLPropertyVisibility.isVisible()");
+        Log.getLog().debug("Entering LocatorURLPropertyVisibility.isVisible()");
         boolean visible = true;
 
         if (ssl)

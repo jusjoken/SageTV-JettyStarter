@@ -5,10 +5,10 @@ import java.io.FilenameFilter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.mortbay.component.LifeCycle;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.log.Log;
-import org.mortbay.util.IO;
+import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.IO;
 
 public class WebAppContextLifeCycleListener implements LifeCycle.Listener
 {
@@ -25,8 +25,8 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
         {
             WebAppContext context = (WebAppContext) event;
 
-            Log.debug("Started web app: " + context);
-            Log.debug("Web app class loader after app started: " + context.getClassLoader() + 
+            Log.getLog().debug("Started web app: " + context);
+            Log.getLog().debug("Web app class loader after app started: " + context.getClassLoader() +
                     "@" + Integer.toHexString(context.getClassLoader().hashCode()));
         }
 
@@ -39,8 +39,8 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
         {
             WebAppContext context = (WebAppContext) event;
 
-            Log.debug("Starting web app: " + context);
-            Log.debug("Web app class loader before app started: " + context.getClassLoader() +
+            Log.getLog().debug("Starting web app: " + context);
+            Log.getLog().debug("Web app class loader before app started: " + context.getClassLoader() +
                     ((context.getClassLoader() == null) ? "" : "@" + Integer.toHexString(context.getClassLoader().hashCode())));
             
             File tempDir = context.getTempDirectory();
@@ -74,7 +74,7 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
                 Throwable t = context.getUnavailableException();
                 if (t != null)
                 {
-                    Log.warn("UnavailableException: " + t.getMessage(), t);
+                    Log.getLog().warn("UnavailableException: " + t.getMessage(), t);
                 }
             }
         }
@@ -91,16 +91,16 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
         File[] tempDirs = tempDir.getParentFile().listFiles(filter);
         for (File currentTempDir : tempDirs)
         {
-            Log.debug("Delete temporary web app directory: " + currentTempDir.getAbsolutePath());
+            Log.getLog().debug("Delete temporary web app directory: " + currentTempDir.getAbsolutePath());
             boolean deleteResult = IO.delete(currentTempDir);
             
             if (deleteResult)
             {
-                Log.debug("Successfully deleted temporary web app directory: " + currentTempDir.getAbsolutePath());
+                Log.getLog().debug("Successfully deleted temporary web app directory: " + currentTempDir.getAbsolutePath());
             }
             else
             {
-                Log.debug("Failed to delete temporary web app directory: " + currentTempDir.getAbsolutePath());
+                Log.getLog().debug("Failed to delete temporary web app directory: " + currentTempDir.getAbsolutePath());
             }
         }
     }
@@ -123,7 +123,7 @@ public class WebAppContextLifeCycleListener implements LifeCycle.Listener
             tempDir = new File(defaultTempDir.getAbsolutePath() + "_" + i++);
         }
 
-        Log.debug("Setting temporary web app directory: " + tempDir.getAbsolutePath());
+        Log.getLog().debug("Setting temporary web app directory: " + tempDir.getAbsolutePath());
         context.setTempDirectory(tempDir);
     }
 

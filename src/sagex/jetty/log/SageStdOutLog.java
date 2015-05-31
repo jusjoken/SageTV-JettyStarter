@@ -1,7 +1,7 @@
 package sagex.jetty.log;
 
-import org.mortbay.log.Logger;
-import org.mortbay.log.StdErrLog;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.log.StdErrLog;
 
 /**
  * Another plugin appears to be redirecting Sage's stderr and therefore
@@ -80,15 +80,12 @@ public class SageStdOutLog extends StdErrLog
             msg=msg.substring(0,i0)+arg0+msg.substring(i0+2);
         return msg;
     }
-    
-    public Logger getLogger(String name)
+
+    public Logger newLogger(String name)
     {
-        if ((name==null && this.name==null) ||
-            (name!=null && name.equals(this.name)))
-            return this;
         return new SageStdOutLog(name);
     }
-    
+
     public String toString()
     {
         return "STDOUT"+name;

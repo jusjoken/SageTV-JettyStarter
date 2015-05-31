@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 
 class GZIPServletOutputStream extends ServletOutputStream
 {
@@ -46,5 +47,17 @@ class GZIPServletOutputStream extends ServletOutputStream
     {
         flush();
         internalGzipOS.finish();
+    }
+
+    @Override
+    public boolean isReady()
+    {
+        return true; // new in Jetty > 6
+    }
+
+    @Override
+    public void setWriteListener(WriteListener writeListener)
+    {
+        // do nothing. new in Jetty > 6
     }
 }

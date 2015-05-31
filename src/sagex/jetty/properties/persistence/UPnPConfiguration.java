@@ -7,7 +7,7 @@ import java.util.Map;
 import net.sbbi.upnp.devices.UPNPRootDevice;
 import net.sbbi.upnp.impls.InternetGatewayDevice;
 
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 import sagex.api.Configuration;
 import sagex.api.Global;
@@ -153,17 +153,17 @@ public class UPnPConfiguration
 
     public static void configureUPnP(JettyPlugin plugin)
     {
-        Log.debug("UPNP: Entering UPnPConfiguration.configureUPnP(" + plugin.toString() + ")");
+        Log.getLog().debug("UPNP: Entering UPnPConfiguration.configureUPnP(" + plugin.toString() + ")");
 
         if (Global.IsClient())
         {
-            Log.debug("UPNP: UPnP is not supported on a client");
+            Log.getLog().debug("UPNP: UPnP is not supported on a client");
             return;
         }
 
         if (!isUPnPEnabled() || !isJettyUPnPEnabled(plugin) || hasDefaultUsernameAndPassword(plugin))
         {
-            Log.debug("UPNP: UPnP is not enabled and will not be configured");
+            Log.getLog().debug("UPNP: UPnP is not enabled and will not be configured");
             return;
         }
 
@@ -184,10 +184,10 @@ public class UPnPConfiguration
 
         validatePorts(plugin, internalHttpPort, externalHttpPort, internalHttpsPort, externalHttpsPort);
         
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpPort=" + internalHttpPort);
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpPort=" + externalHttpPort);
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpsPort=" + internalHttpsPort);
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpsPort=" + externalHttpsPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpPort=" + internalHttpPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpPort=" + externalHttpPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpsPort=" + internalHttpsPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpsPort=" + externalHttpsPort);
 
         // let the core know that UPnP settings are being modified so it won't mess with it
         Configuration.SetServerProperty(SAGE_PROP_NAME_PORT_FORWARD_ACTIVE, "true");
@@ -219,8 +219,8 @@ public class UPnPConfiguration
         }
         catch (Exception e)
         {
-            Log.info(e.getMessage());
-            Log.ignore(e);
+            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().ignore(e);
         }
         finally
         {
@@ -238,11 +238,11 @@ public class UPnPConfiguration
      */
     public static void removeUPnP(JettyPlugin plugin)
     {
-        Log.debug("UPNP: Entering UPnPConfiguration.removeUPnP(" + plugin + "))");
+        Log.getLog().debug("UPNP: Entering UPnPConfiguration.removeUPnP(" + plugin + "))");
 
         if (Global.IsClient())
         {
-            Log.debug("UPNP: UPnP is not supported on a client");
+            Log.getLog().debug("UPNP: UPnP is not supported on a client");
             return;
         }
 
@@ -263,10 +263,10 @@ public class UPnPConfiguration
             externalHttpsPort = internalHttpsPort;
         }
 
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpPort=" + internalHttpPort);
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpPort=" + externalHttpPort);
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpsPort=" + internalHttpsPort);
-        Log.debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpsPort=" + externalHttpsPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpPort=" + internalHttpPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpPort=" + externalHttpPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: internalHttpsPort=" + internalHttpsPort);
+        Log.getLog().debug("UPNP: UPnPConfiguration.configureJettyUPnP: externalHttpsPort=" + externalHttpsPort);
 
         // get current property values
         Configuration.RemoveServerProperty(SAGE_PROP_NAME_PORT_FORWARD_ADDL_MAPPINGS + "/" + JETTY_HTTP_PORT_MAPPING_NAME + "/TCP/" + externalHttpPort);
@@ -290,8 +290,8 @@ public class UPnPConfiguration
         }
         catch (Exception e)
         {
-            Log.info(e.getMessage());
-            Log.ignore(e);
+            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().ignore(e);
         }
         finally
         {
@@ -301,10 +301,10 @@ public class UPnPConfiguration
 
     private synchronized static InternetGatewayDevice getUPnPDevice()
     {
-        Log.debug("UPNP: Entering UPnPConfiguration.getUPnPDevice())");
+        Log.getLog().debug("UPNP: Entering UPnPConfiguration.getUPnPDevice())");
 
         String udn = Configuration.GetServerProperty(SAGE_PROP_NAME_PORT_FORWARD_UDN, null);
-        Log.debug("UPNP: Current UPnP device UDN: " + udn);
+        Log.getLog().debug("UPNP: Current UPnP device UDN: " + udn);
 
         if (udn == null)
         {
@@ -323,27 +323,27 @@ public class UPnPConfiguration
         try
         {
             devices = InternetGatewayDevice.getDevices(5000);
-            Log.debug("UPNP: Network devices: " + devices);
+            Log.getLog().debug("UPNP: Network devices: " + devices);
         }
         catch (IOException e)
         {
-            Log.info(e.getMessage());
-            Log.ignore(e);
+            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().ignore(e);
             return null;
         }
         
         if (devices != null)
         {
-            Log.debug("UPNP: Searching for UPnP device: " + udn);
+            Log.getLog().debug("UPNP: Searching for UPnP device: " + udn);
             for (InternetGatewayDevice device : devices)
             {
                 UPNPRootDevice rootDevice = device.getIGDRootDevice();
                 String currentUdn = rootDevice.getUDN();
-                Log.debug("UPNP: Found a UPnP device with UDN: " + udn);
+                Log.getLog().debug("UPNP: Found a UPnP device with UDN: " + udn);
 
                 if (currentUdn.equals(udn))
                 {
-                    Log.debug("UPNP: Successfully found configured UDN device: " + udn);
+                    Log.getLog().debug("UPNP: Successfully found configured UDN device: " + udn);
                     // cache the device because the getDevices API takes 5 seconds
                     devicesMap.put(udn, device);
                     return device;

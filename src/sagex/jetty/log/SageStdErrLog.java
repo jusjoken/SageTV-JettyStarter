@@ -1,7 +1,7 @@
 package sagex.jetty.log;
 
-import org.mortbay.log.Logger;
-import org.mortbay.log.StdErrLog;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.util.log.StdErrLog;
 
 /**
  * Don't output the timestamp because Sage's logger already does.
@@ -77,15 +77,7 @@ public class SageStdErrLog extends StdErrLog
             msg=msg.substring(0,i0)+arg0+msg.substring(i0+2);
         return msg;
     }
-    
-    public Logger getLogger(String name)
-    {
-        if ((name==null && this.name==null) ||
-            (name!=null && name.equals(this.name)))
-            return this;
-        return new SageStdErrLog(name);
-    }
-    
+
     public String toString()
     {
         return "STDERR"+name;

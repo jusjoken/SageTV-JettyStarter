@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.mortbay.log.Log;
+import org.eclipse.jetty.util.log.Log;
 
 import sagex.api.Configuration;
 import sagex.jetty.properties.JettyProperties;
@@ -37,11 +37,11 @@ public class SslEnabledPersistence implements IPropertyPersistence
     }
 
     /**
-     * Add jetty-ssl.xml to the config files property when it's enabled.  Remove it when it's disabled.
+     * Add jetty-ssl.xml and jetty-https.xml to the config files property when ssl is enabled.  Remove when it's disabled.
      */
     public void set(String property, String value)
     {
-        Log.debug("Entering SslEnabledPersistence.set(" + property + ", " + value + ")");
+        Log.getLog().debug("Entering SslEnabledPersistence.set(" + property + ", " + value + ")");
 
         if (!property.equals(JettyPlugin.PROP_NAME_SSL_ENABLE))
         {
@@ -49,52 +49,52 @@ public class SslEnabledPersistence implements IPropertyPersistence
         }
 
         String configFiles = Configuration.GetProperty("jetty/jetty.configfiles", "");
-        Log.debug("Current config files property: " + configFiles);
+        Log.getLog().debug("Current config files property: " + configFiles);
         String[] configFileArray = JettyProperties.parseConfigFilesSetting(configFiles);
         for (int i = 0; i < configFileArray.length; i++)
         {
             String configFile = configFileArray[i];
-            Log.debug("Config file [" + i + "] = " + configFile);
+            Log.getLog().debug("Config file [" + i + "] = " + configFile);
         }
         // create a modifiable list
         List<String> configFileList = new ArrayList<String>(Arrays.asList(configFileArray));
         for (int i = 0; i < configFileList.size(); i++)
         {
             String configFile = configFileList.get(i);
-            Log.debug("Config file (" + i + ") = " + configFile);
+            Log.getLog().debug("Config file (" + i + ") = " + configFile);
         }
         
         boolean isSslEnabled = get(property, "").equals("true");
-        Log.debug("isSslEnabled " + isSslEnabled);
+        Log.getLog().debug("isSslEnabled " + isSslEnabled);
 
         if ((value == null) || (value.toLowerCase().equals("false")))
         {
             // disable SSL
             if (isSslEnabled)
             {
-                Log.debug("Disabling SSL");
+                Log.getLog().debug("Disabling SSL");
                 ListIterator<String> iter = configFileList.listIterator();
                 while (iter.hasNext())
                 {
                     String configFile = iter.next();
-                    Log.debug("Config file iterator element " + configFile);
-                    if (configFile.contains("jetty-ssl.xml"))
+                    Log.getLog().debug("Config file iterator element " + configFile);
+                    if (configFile.endsWith("jetty-ssl.xml") || configFile.endsWith("jetty-https.xml"))
                     {
                         try
                         {
-                            Log.debug("Removing element");
+                            Log.getLog().debug("Removing element");
                             iter.remove();
-                            Log.debug("Element removed");
+                            Log.getLog().debug("Element removed");
                         }
                         catch (Throwable t)
                         {
-                            Log.info(t.getMessage());
-                            Log.ignore(t);
+                            Log.getLog().info(t.getMessage(), t);
+                            Log.getLog().ignore(t);
                         }
                     }
                     else
                     {
-                        Log.debug("Not removing element");
+                        Log.getLog().debug("Not removing element");
                     }
                 }
             }
@@ -104,16 +104,17 @@ public class SslEnabledPersistence implements IPropertyPersistence
             // enable SSL
             if (!isSslEnabled)
             {
-                Log.debug("Enabling SSL");
+                Log.getLog().debug("Enabling SSL");
                 File jettySslFile = new File("jetty/etc/jetty-ssl.xml");
                 configFileList.add(jettySslFile.getAbsolutePath());
+                File jettyHttpsFile = new File("jetty/etc/jetty-https.xml");
+                configFileList.add(jettyHttpsFile.getAbsolutePath());
             }
-            
         }
         
         StringBuilder sb = new StringBuilder();
 
-        Log.debug("Building new config file list");
+        Log.getLog().debug("Building new config file list");
         for (int i = 0; i < configFileList.size(); i++)
         {
             if (i > 0)
@@ -123,11 +124,11 @@ public class SslEnabledPersistence implements IPropertyPersistence
             sb.append("\"" + configFileList.get(i) + "\"");
         }
         
-        Log.debug("Setting Jetty config files property to: " + sb.toString());
+        Log.getLog().debug("Setting Jetty config files property to: " + sb.toString());
 
         Configuration.SetProperty("jetty/jetty.configfiles", sb.toString());
 
         configFiles = Configuration.GetProperty("jetty/jetty.configfiles", "");
-        Log.debug("New config files property: " + configFiles);
+        Log.getLog().debug("New config files property: " + configFiles);
     }
 }

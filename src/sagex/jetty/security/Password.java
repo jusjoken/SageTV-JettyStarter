@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 /**
  * Utility class for creating encrypted or obfuscated passwords.
  * <p>
- * The org.mortbay.jetty.security.Password class requires the
+ * The org.eclipse.jetty.util.security.Password class requires the
  * password to be entered on the command line, despite being
  * documented that entering a question mark for the password
  * will tell the program to prompt the user for the password.
@@ -33,7 +33,7 @@ public class Password
                     args[pwIndex] = pwInput;
                 }
             }
-            org.mortbay.jetty.security.Password.main(args);
+            org.eclipse.jetty.util.security.Password.main(args);
         }
         catch (Exception e)
         {
