@@ -1,6 +1,6 @@
 <?xml version="1.0"  encoding="ISO-8859-1"?>
-<!DOCTYPE Configure PUBLIC "-//Mort Bay Consulting//DTD Configure//EN" "http://jetty.mortbay.org/configure.dtd">
-<Configure class="org.mortbay.jetty.webapp.WebAppContext">
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
   <Set name="contextPath">/apps</Set>
 
   <Set name="displayName">SageTV Web Applications</Set>
@@ -35,8 +35,8 @@
        is in the web.xml file inside the war file -->
   <!-- can the constraints be included in another file we won't overwrite? -->
   <Get name="securityHandler">
-    <Set name="userRealm">
-      <New class="org.mortbay.jetty.security.HashUserRealm">
+    <Set name="loginService">
+      <New class="org.eclipse.jetty.security.HashLoginService">
         <Set name="name">SageTV Web Interface</Set>
         <Set name="config"><SystemProperty name="jetty.home" default="."/>/etc/realm.properties</Set>
       </New>
@@ -44,11 +44,11 @@
     <Set name="checkWelcomeFiles">true</Set>
     <Set name="constraintMappings">
     <!-- TODO create unprotected public area -->
-      <Array type="org.mortbay.jetty.security.ConstraintMapping">
+      <Array type="org.eclipse.jetty.security.ConstraintMapping">
         <Item>
-          <New class="org.mortbay.jetty.security.ConstraintMapping">
+          <New class="org.eclipse.jetty.security.ConstraintMapping">
             <Set name="constraint">
-              <New class="org.mortbay.jetty.security.Constraint">
+              <New class="org.eclipse.jetty.util.security.Constraint">
                 <Set name="name">BASIC</Set>
                 <Set name="roles">
                   <Array type="java.lang.String">
