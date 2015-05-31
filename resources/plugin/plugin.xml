@@ -27,7 +27,7 @@ Version 3.0.0
 1. Migrate from Jetty 6 to Jetty 9
     - Requires Java 7, supports Java 8
     - Support dropped for the Apache connector (AJP)
-
+ 
 Version 2.3.0
 1. Remove Ant JAR from this download and instead rely on the Ant plugin dependency
  
