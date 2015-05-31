@@ -19,10 +19,15 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <ResourcePath>jetty</ResourcePath>
   <Screenshot title="Web Application List">http://sageplugins.sourceforge.net/screenshots/jetty/SageTVWebApps.png</Screenshot>
   <Webpage title="Jetty Plugin 2.0 Forum Support Thread">http://forums.sagetv.com/forums/showthread.php?t=48818</Webpage>
-  <Webpage title="Jetty Plugin Wiki">http://tools.assembla.com/sageplugins/wiki/Jetty</Webpage>
-  <Webpage title="Jetty Home Page - Mortbay Consulting">http://jetty.codehaus.org/jetty/</Webpage>
+  <Webpage title="Jetty Home Page">http://eclipse.org/jetty/</Webpage>
+  <Webpage title="Plugin Source Code">https://github.com/jreicheneker/SageTV-JettyStarter</Webpage>
   <ReleaseNotes>
     <![CDATA[
+Version 3.0.0
+1. Migrate from Jetty 6 to Jetty 9
+    - Requires Java 7, supports Java 8
+    - Support dropped for the Apache connector (AJP)
+
 Version 2.3.0
 1. Remove Ant JAR from this download and instead rely on the Ant plugin dependency
  
@@ -67,7 +72,7 @@ Version 1.7.5 beta
   </Dependency>
   <Dependency>
     <JVM></JVM>
-    <MinVersion>1.5</MinVersion>
+    <MinVersion>1.7</MinVersion>
   </Dependency>
   <Dependency>
     <Plugin>sagex-api</Plugin>
