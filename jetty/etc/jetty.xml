@@ -179,7 +179,56 @@
         </Set>
       </Ref>
     </Set>
-<!-- TODO context deployer? -->
+
+    <Call name="addBean">
+        <Arg>
+            <New id="DeploymentManager" class="org.eclipse.jetty.deploy.DeploymentManager">
+                <Set name="contexts">
+                    <Ref refid="Contexts" />
+                </Set>
+                <Call name="setContextAttribute">
+                    <Arg>org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern</Arg>
+                    <Arg>.*/[^/]*servlet-api-[^/]*\.jar$|.*/javax.servlet.jsp.jstl-.*\.jar$|.*/org.apache.taglibs.taglibs-standard-impl-.*\.jar$</Arg>
+                </Call>
+
+                <!-- Add a customize step to the deployment lifecycle -->
+                <!-- uncomment and replace DebugBinding with your extended AppLifeCycle.Binding class
+                <Call name="insertLifeCycleNode">
+                  <Arg>deployed</Arg>
+                  <Arg>starting</Arg>
+                  <Arg>customise</Arg>
+                </Call>
+                <Call name="addLifeCycleBinding">
+                  <Arg>
+                    <New class="org.eclipse.jetty.deploy.bindings.DebugBinding">
+                      <Arg>customise</Arg>
+                    </New>
+                  </Arg>
+                </Call> -->
+
+                <Call id="webappprovider" name="addAppProvider">
+                    <Arg>
+                        <New class="org.eclipse.jetty.deploy.providers.WebAppProvider">
+                            <Set name="monitoredDirName"><Property name="jetty.home" default="." />/contexts</Set>
+                            <Set name="defaultsDescriptor"><Property name="jetty.home" default="." />/etc/webdefault.xml</Set>
+                            <Set name="scanInterval"><Property name="jetty.deploy.scanInterval" default="1"/></Set>
+                            <Set name="extractWars"><Property name="jetty.deploy.extractWars" default="true"/></Set>
+                            <Set name="configurationManager">
+                                <New class="org.eclipse.jetty.deploy.PropertiesConfigurationManager">
+                                    <!-- file of context configuration properties
+                                    <Set name="file"><SystemProperty name="jetty.base"/>/etc/some.properties</Set>
+                                    -->
+                                    <!-- set a context configuration property
+                                    <Call name="put"><Arg>name</Arg><Arg>value</Arg></Call>
+                                    -->
+                                </New>
+                            </Set>
+                        </New>
+                    </Arg>
+                </Call>
+            </New>
+        </Arg>
+    </Call>
 
     <!-- =========================================================== -->
     <!-- Configure Request Log -->
