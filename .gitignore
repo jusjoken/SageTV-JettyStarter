@@ -1,0 +1,12 @@
+.DS_Store
+
+bin
+build
+dist
+
+Sage.jar
+build.properties
+build.number
+
+.idea/
+*.iml
