@@ -119,6 +119,7 @@
     <!-- for example the jetty-requestlog.xml file adds the          -->
     <!-- RequestLogHandler after the default handler                 -->
     <!-- =========================================================== -->
+    <!-- portions from jetty-rewrite.xml -->
     <New id="RewriteHandler" class="org.eclipse.jetty.rewrite.handler.RewriteHandler">
       <Set name="rewriteRequestURI">true</Set>
       <Set name="rewritePathInfo">true</Set>
@@ -180,6 +181,7 @@
       </Ref>
     </Set>
 
+    <!-- begin jetty-deploy.xml -->
     <Call name="addBean">
         <Arg>
             <New id="DeploymentManager" class="org.eclipse.jetty.deploy.DeploymentManager">
@@ -229,7 +231,26 @@
             </New>
         </Arg>
     </Call>
+    <!-- end jetty-deploy.xml -->
 
+    <!-- begin jetty-annotations.xml -->
+    <!-- =========================================================== -->
+    <!-- Add annotation Configuring classes to all webapps for this Server -->
+    <!-- =========================================================== -->
+    <!--Call class="org.eclipse.jetty.webapp.Configuration$ClassList" name="setServerDefault">
+        <Arg><Ref refid="Server" /></Arg>
+        <Call name="addBefore">
+            <Arg name="beforeClass">org.eclipse.jetty.webapp.JettyWebXmlConfiguration</Arg>
+            <Arg>
+                <Array type="String">
+                    <Item>org.eclipse.jetty.annotations.AnnotationConfiguration</Item>
+                </Array>
+            </Arg>
+        </Call>
+    </Call-->
+    <!-- end jetty-annotations.xml -->
+
+    <!-- begin jetty-requestlog.xml -->
     <!-- =========================================================== -->
     <!-- Configure Request Log -->
     <!-- =========================================================== -->
@@ -246,6 +267,7 @@
         </New>
       </Set>
     </Ref>
+    <!-- end jetty-requestlog.xml -->
 
     <!-- =========================================================== -->
     <!-- extra server options                                        -->
