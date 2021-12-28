@@ -12,7 +12,8 @@ import org.eclipse.jetty.util.log.Log;
 
 import sagex.jetty.properties.JettyProperties;
 
-// TODO resolve properties and detect circular references
+// @deprecated as no longer needed in SageTV7 or higher
+@Deprecated
 public class JettyStarterProperties
 {
     // in JettyStarter.properties, system properties are enclosed in $()

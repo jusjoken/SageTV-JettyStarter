@@ -17,13 +17,13 @@ import sagex.api.Global;
 import sagex.jetty.log.JettyStarterLogger;
 import sagex.jetty.properties.JettyProperties;
 import sagex.jetty.properties.SagePropertiesImpl;
-import sagex.jetty.properties.persistence.SslEnabledPersistence;
 import sagex.jetty.properties.persistence.UPnPConfiguration;
 import sagex.jetty.properties.persistence.UserRealmPersistence;
 import sagex.jetty.properties.visibility.LocatorURLPropertyVisibility;
 import sagex.jetty.properties.visibility.UPnPPropertyVisibility;
 import sagex.plugin.AbstractPlugin;
 import sagex.plugin.ButtonClickHandler;
+import sagex.plugin.ConfigValueChangeHandler;
 import sagex.plugin.PluginProperty;
 
 public class JettyPlugin extends AbstractPlugin
@@ -43,6 +43,7 @@ public class JettyPlugin extends AbstractPlugin
     public static final String PROP_NAME_LOCATOR_HTTPS_URL = "jetty/locator.https.url";
 
     private static final List<String> PROP_RESTART_REQUIRED = new ArrayList<String>();
+    private static final List<String> PROP_UPNPCONFIG_REQUIRED = new ArrayList<String>();
 
     // TODO resources file
     public static final String PROP_HELP_UPNP_DEFAULT  = "Choose whether to automatically or manually configure your router or firewall to allow access to SageTV's web server from outside your home network.";
@@ -61,28 +62,38 @@ public class JettyPlugin extends AbstractPlugin
     public static final String LOGLEVEL_CHOICE_VERBOSE_DEPRECATED  = "VERBOSE";
 
     //    private boolean restartNeeded = false;// *property name
-    private final String[] DEFAULT_CONFIG_FILES = { "etc/jetty.xml", "etc/jetty-http.xml" };
+    
+    //DefaultConfigFiles no longer used since Jetty 9 as defaults are no built in Java code
+    //private final String[] DEFAULT_CONFIG_FILES = { "etc/jetty.xml", "etc/jetty-http.xml" };
+    
     private Map<String, String> modifiedProperties = new HashMap<String, String>();
 
     static
     {
         // Handle all logging for Jetty and Jetty Starter
-        JettyStarterLogger.init();
+    	JettyStarterLogger.init();
 
         Log.getLog().info("Jetty Starter plugin version " + JettyPlugin.class.getPackage().getImplementationVersion());
+        Log.getLog().info("Jetty Starter log level set to: " + JettyStarterLogger.getLogLevel());
         
         PROP_RESTART_REQUIRED.add(PROP_NAME_USER);
         PROP_RESTART_REQUIRED.add(PROP_NAME_PASSWORD);
         PROP_RESTART_REQUIRED.add(PROP_NAME_HTTP_PORT);
         PROP_RESTART_REQUIRED.add(PROP_NAME_SSL_ENABLE);
         PROP_RESTART_REQUIRED.add(PROP_NAME_HTTPS_PORT);
-        PROP_RESTART_REQUIRED.add(PROP_NAME_LOG_LEVEL);
+        //PROP_RESTART_REQUIRED.add(PROP_NAME_LOG_LEVEL);
+        
+        PROP_UPNPCONFIG_REQUIRED.add(PROP_NAME_UPNP);
+        PROP_UPNPCONFIG_REQUIRED.add(PROP_NAME_UPNP_EXTERNAL_HTTP_PORT);
+        PROP_UPNPCONFIG_REQUIRED.add(PROP_NAME_UPNP_EXTERNAL_HTTPS_PORT);
+        PROP_UPNPCONFIG_REQUIRED.add(PROP_NAME_UPNP_UNAVAILABLE);
+        
     }
     
     public JettyPlugin(SageTVPluginRegistry registry)
     {
         super(registry);
-        Log.getLog().debug("Entering JettyPlugin.<init>(" + registry + ")");
+        Log.getLog().info("Entering JettyPlugin.<init>(" + registry + ")");
 
         addProperty(SageTVPlugin.CONFIG_BUTTON,
                     PROP_NAME_RESTART,
@@ -108,9 +119,8 @@ public class JettyPlugin extends AbstractPlugin
                     PROP_NAME_SSL_ENABLE,
                     "false",
                     "Enable SSL",
-                    "Enable an encrypted HTTPS connection.  Keystore must be set up manually.  See http://tools.assembla.com/sageplugins/wiki/JettyPluginSSL.")
+                    "Enable an encrypted HTTPS connection.  Keystore must be set up manually.  See http://tools.assembla.com/sageplugins/wiki/JettyPluginSSL.");
 //                    "Enable use of an encrypted HTTPS connection.  See http://tools.assembla.com/sageplugins/wiki/JettySSL.")
-                    .setPersistence(new SslEnabledPersistence());
 
         addProperty(SageTVPlugin.CONFIG_INTEGER,
                     PROP_NAME_HTTP_PORT,
@@ -205,20 +215,25 @@ public class JettyPlugin extends AbstractPlugin
     public synchronized void start()
     {
         super.start();
-        Log.getLog().debug("Entering JettyPlugin.start()");
-
+        Log.getLog().info("Entering JettyPlugin.start()");
         try
         {
+            Log.getLog().info("START: cleanRunnableClasses");
             cleanRunnableClasses();
-            migrateProperties();
+            //migrateProperties();
+            //System.out.println("***** Jetty Start - try migrate");
+            Log.getLog().info("START: createDefaultProperties");
             createDefaultProperties();
+            Log.getLog().info("START: updateJettyConfigFilesPropertyForJetty9");
             updateJettyConfigFilesPropertyForJetty9();
+            Log.getLog().info("START: setPropProvider to SagePropertiesImpl.class");
             JettyInstance.getInstance().setPropertyProvider(SagePropertiesImpl.class);
+            Log.getLog().info("START: call instance start");
             JettyInstance.getInstance().start();
         }
         catch (Exception e)
         {
-            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().info("START failed: " + e.getMessage());
             Log.getLog().ignore(e);
         }
     }
@@ -229,23 +244,25 @@ public class JettyPlugin extends AbstractPlugin
     public synchronized void stop()
     {
         super.stop();
-        Log.getLog().debug("Entering JettyPlugin.stop()");
+        Log.getLog().info("Entering JettyPlugin.stop()");
         
         try
         {
+            Log.getLog().info("STOP: calling instance stop");
             JettyInstance.getInstance().stop();
+            Log.getLog().info("STOP: clearing modified properties");
             modifiedProperties.clear();
         }
         catch (Exception e)
         {
-            Log.getLog().info(e.getMessage(), e);
+            Log.getLog().info("STOP failed: " + e.getMessage());
             Log.getLog().ignore(e);
         }
     }
 
     public String getConfigHelpText(String setting)
     {
-        Log.getLog().debug("Entering JettyPlugin.getConfigHelpText(" + setting + "))");
+        Log.getLog().info("Entering JettyPlugin.getConfigHelpText(" + setting + "))");
 
         String help = null;
 
@@ -296,7 +313,7 @@ public class JettyPlugin extends AbstractPlugin
     @Override
     public String getConfigValue(String setting)
     {
-        Log.getLog().debug("Entering JettyPlugin.getConfigValue(" + setting + "))");
+        Log.getLog().info("JettyPlugin.getConfigValue(" + setting + "))");
         Log.getLog().debug("Global.GetUIContextName() " + Global.GetUIContextName());
         Log.getLog().debug("UIContext.getCurrentContext() " + UIContext.getCurrentContext());
         Log.getLog().debug("thread name " + Thread.currentThread().getName());
@@ -375,27 +392,33 @@ public class JettyPlugin extends AbstractPlugin
         }
 
         if (PROP_NAME_LOG_LEVEL.equals(setting)) {
+        	configValue = JettyStarterLogger.getLogLevel();
+        	/*
             if (super.getConfigValue(setting).equals(LOGLEVEL_CHOICE_VERBOSE_DEPRECATED)) {
                 // VERBOSE was deprecated after Jetty 6. Switch to the default (INFO) if it was VERBOSE.
                 configValue = LOGLEVEL_CHOICE_INFO;
             }
+            */
         }
 
         if (configValue == null)
         {
+            Log.getLog().info("JettyPlugin.getConfigValue: getting value from super");
             configValue = super.getConfigValue(setting);
         }
 
+        Log.getLog().info("JettyPlugin.getConfigValue for:" + setting + " returning " + configValue);
         return configValue;
     }
 
     public void setConfigValue(String setting, String value)
     {
-        Log.getLog().debug("Entering JettyPlugin.setConfigValue(" + setting + ", " + value + "))");
+        Log.getLog().info("JettyPlugin.setConfigValue(" + setting + ", " + value + "))");
         String originalValue = getConfigValue(setting);
+        Log.getLog().info("JettyPlugin.setConfigValue: originalValue = '" + originalValue + "'");
         
         // remove the current UPnP settings and router mappings before changing the property values
-        if (!Global.IsClient())
+        if (!Global.IsClient() && PROP_UPNPCONFIG_REQUIRED.contains(setting))
         {
             try
             {
@@ -403,15 +426,17 @@ public class JettyPlugin extends AbstractPlugin
             }
             catch (Throwable t)
             {
-                Log.getLog().info(t.getMessage(), t);
+                Log.getLog().info(t.getMessage());
                 Log.getLog().ignore(t);
             }
         }
 
         // call AbstractPlugin
+        Log.getLog().info("JettyPlugin.setConfigValue - calling super on: " + setting + " , " + value);
         super.setConfigValue(setting, value);
+        Log.getLog().info("JettyPlugin.setConfigValue - returned from super on: " + setting + " , " + value);
         
-        if (!Global.IsClient())
+        if (!Global.IsClient() && PROP_UPNPCONFIG_REQUIRED.contains(setting))
         {
             UPnPConfiguration.configureUPnP(this);
         }
@@ -433,6 +458,11 @@ public class JettyPlugin extends AbstractPlugin
                     modifiedProperties.put(setting, originalValue);
                 }
             }
+        }
+        
+        if (PROP_NAME_LOG_LEVEL.equals(setting)) {
+        	//if the log level has been changed then set the new log level
+        	JettyStarterLogger.setLogLevel(value);
         }
     }
 
@@ -496,10 +526,11 @@ public class JettyPlugin extends AbstractPlugin
         }
     }
 
+    /* Migrate is no longer validate as it pertained to SageTV v6
     /**
      * Migrate properties from JettyStarter.properties to Sage.properties when upgrading to version 7.
      * Remove the JettyStarter.properties file.
-     */
+     @deprecated as no longer needed in SageTV7 or higher
     private void migrateProperties()
     {
         String configFiles = Configuration.GetProperty("jetty/" + JettyProperties.JETTY_CONFIG_FILES_PROPERTY, null);
@@ -509,7 +540,7 @@ public class JettyPlugin extends AbstractPlugin
             return;
         }
     
-        Log.getLog().debug("Moving Jetty plugin properties from JettyStarter.properties to Sage.properties");
+        Log.getLog().info("Moving Jetty plugin properties from JettyStarter.properties to Sage.properties");
         File propertiesFile = JettyStarterProperties.getPropertiesFile();
         if (propertiesFile.exists())
         {
@@ -538,6 +569,7 @@ public class JettyPlugin extends AbstractPlugin
             Configuration.SetProperty("jetty/" + propertyName, propertyValue);
         }
     }
+    */
 
     /**
      * Make sure all the default config files for Jetty 9 are in the config files property.
@@ -545,76 +577,76 @@ public class JettyPlugin extends AbstractPlugin
      */
     private void updateJettyConfigFilesPropertyForJetty9()
     {
-        String jettyHome = Configuration.GetProperty("jetty/" + JettyProperties.JETTY_HOME_PROPERTY, null);
-        String [] configFiles = JettyProperties.parseConfigFilesSetting(Configuration.GetProperty("jetty/" + JettyProperties.JETTY_CONFIG_FILES_PROPERTY, null));
+    	Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - starting");
+    	String jettyHome = Configuration.GetProperty("jetty/" + JettyProperties.JETTY_HOME_PROPERTY, null);
+    	Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - jettyHome:" + jettyHome);
+        String [] extraconfigFiles = JettyProperties.parseConfigFilesSetting(Configuration.GetProperty("jetty/" + JettyProperties.JETTY_EXTRA_CONFIG_FILES_PROPERTY, null));
+    	Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - extraconfigFiles:" + extraconfigFiles);
 
-        if (configFiles == null)
+        if (extraconfigFiles == null || extraconfigFiles.length == 0)
         {
-            throw new IllegalStateException("No Jetty configuration files are specified in Sage.properties");
-        }
+            Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - No Extra Jetty configuration files are specified in Sage.properties");
+            Configuration.RemoveProperty("jetty/" + JettyProperties.JETTY_EXTRA_CONFIG_FILES_PROPERTY);
+        }else {
+        	Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - before List");
+            List<String> configFilesList = new ArrayList<String>(Arrays.asList(extraconfigFiles));
+        	Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - after List");
 
-        List<String> configFilesList = new ArrayList<String>(Arrays.asList(configFiles));
-
-        for (String configFile : configFilesList)
-        {
-            Log.getLog().debug("updateJettyConfigFilesPropertyForJetty9 - Config file list item before: " + configFile);
-        }
-
-        // Make sure all the defaults are in the list
-        for (String defaultConfigFile : DEFAULT_CONFIG_FILES)
-        {
-            String configFile = new File(jettyHome, defaultConfigFile).getAbsolutePath();
-            if (!configFilesList.contains(configFile))
+            for (String configFile : configFilesList)
             {
-                configFilesList.add(configFile);
-            }
-        }
-
-        for (String configFile : configFilesList)
-        {
-            Log.getLog().debug("updateJettyConfigFilesPropertyForJetty9 - Config file list item with defaults: " + configFile);
-        }
-
-        // Make sure if jetty-ssl.xml is in the list, then jetty-https.xml is also in the list
-        boolean hasJettySsl = false;
-        boolean hasJettyHttps = false;
-        for (String configFile : configFilesList)
-        {
-            if (configFile.endsWith("jetty-ssl.xml"))
-            {
-                hasJettySsl = true;
+                Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - Config file list item before: " + configFile);
             }
 
-            if (configFile.endsWith("jetty-https.xml"))
+            for (String configFile : configFilesList)
             {
-                hasJettyHttps = true;
+                Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - Config file list item complete: " + configFile);
             }
-        }
+            
+            //TODO: KEB may want to make sure that jetty.xml and jetty-http.xml are NOT in the extra list (and other ones we load by code)
 
-        if (hasJettySsl && !hasJettyHttps)
-        {
-            configFilesList.add(new File(jettyHome, "etc/jetty-https.xml").getAbsolutePath());
-        }
-
-        for (String configFile : configFilesList)
-        {
-            Log.getLog().debug("updateJettyConfigFilesPropertyForJetty9 - Config file list item after: " + configFile);
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < configFilesList.size(); i++)
-        {
-            if (i > 0)
+            // Make sure if jetty-ssl.xml is in the list, then jetty-https.xml is also in the list
+            boolean hasJettySsl = false;
+            boolean hasJettyHttps = false;
+            for (String configFile : configFilesList)
             {
-                sb.append(" ");
-            }
-            String configFile = configFilesList.get(i);
-            sb.append("\"" + configFile + "\"");
-        }
-        Log.getLog().debug("updateJettyConfigFilesPropertyForJetty9 - Config files property: " + sb.toString());
+                if (configFile.endsWith("jetty-ssl.xml"))
+                {
+                    hasJettySsl = true;
+                }
 
-        Configuration.SetProperty("jetty/jetty.configfiles", sb.toString());
+                if (configFile.endsWith("jetty-https.xml"))
+                {
+                    hasJettyHttps = true;
+                }
+            }
+
+            if (hasJettySsl && !hasJettyHttps)
+            {
+                configFilesList.add(new File(jettyHome, "etc/jetty-https.xml").getAbsolutePath());
+            }
+
+            for (String configFile : configFilesList)
+            {
+                Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - Config file list item after: " + configFile);
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < configFilesList.size(); i++)
+            {
+                if (i > 0)
+                {
+                    sb.append(" ");
+                }
+                String configFile = configFilesList.get(i);
+                sb.append("\"" + configFile + "\"");
+            }
+            Log.getLog().info("updateJettyConfigFilesPropertyForJetty9 - Config files property: " + sb.toString());
+
+            Configuration.SetProperty("jetty/jetty.configfiles", sb.toString());
+        	
+        }
+
     }
 
     private void createDefaultProperties()
@@ -627,6 +659,14 @@ public class JettyPlugin extends AbstractPlugin
             Configuration.SetProperty("jetty/" + JettyProperties.JETTY_HOME_PROPERTY, jettyHome);
         }
 
+        String jettyBase = Configuration.GetProperty("jetty/" + JettyProperties.JETTY_BASE_PROPERTY, null);
+        if (jettyBase == null)
+        {
+            jettyBase = new File(System.getProperty("user.dir"), "jetty").getAbsolutePath();
+            Configuration.SetProperty("jetty/" + JettyProperties.JETTY_BASE_PROPERTY, jettyBase);
+        }
+
+        /*
         String configFiles = Configuration.GetProperty("jetty/" + JettyProperties.JETTY_CONFIG_FILES_PROPERTY, null);
         if (configFiles == null)
         {
@@ -645,6 +685,7 @@ public class JettyPlugin extends AbstractPlugin
 
             Configuration.SetProperty("jetty/" + JettyProperties.JETTY_CONFIG_FILES_PROPERTY, sb.toString());
         }
+        */
         
         String logs = Configuration.GetProperty("jetty/" + JettyProperties.JETTY_LOGS_PROPERTY, null);
         if (logs == null)
@@ -723,7 +764,7 @@ public class JettyPlugin extends AbstractPlugin
     @ButtonClickHandler(value=PROP_NAME_RESTART)
     public synchronized void onRestartButtonClicked(String setting, String value)
     {
-        Log.getLog().debug("Entering JettyPlugin.onRestartButtonClicked(" + setting + ", " + value + ")");
+        Log.getLog().info("Entering JettyPlugin.onRestartButtonClicked(" + setting + ", " + value + ")");
         stop();
         start();
     }
@@ -731,7 +772,7 @@ public class JettyPlugin extends AbstractPlugin
     @ButtonClickHandler(value=PROP_NAME_LOCATOR_HTTP_URL)
     public void onLocatorHttpUrlButtonClicked(String setting, String value)
     {
-        Log.getLog().debug("Entering JettyPlugin.onLocatorHttpUrlButtonClicked(" + setting + ", " + value + ")");
+        Log.getLog().info("Entering JettyPlugin.onLocatorHttpUrlButtonClicked(" + setting + ", " + value + ")");
 
         if (isClipboardAvailable())
         {
@@ -745,7 +786,7 @@ public class JettyPlugin extends AbstractPlugin
     @ButtonClickHandler(value=PROP_NAME_LOCATOR_HTTPS_URL)
     public void onLocatorHttpsUrlButtonClicked(String setting, String value)
     {
-        Log.getLog().debug("Entering JettyPlugin.onLocatorHttpsUrlButtonClicked(" + setting + ", " + value + ")");
+        Log.getLog().info("Entering JettyPlugin.onLocatorHttpsUrlButtonClicked(" + setting + ", " + value + ")");
 
         if (isClipboardAvailable())
         {
@@ -754,5 +795,11 @@ public class JettyPlugin extends AbstractPlugin
             StringSelection urlSelection = new StringSelection(url);
             clipboard.setContents(urlSelection, urlSelection);
         }
+    }
+
+    @ConfigValueChangeHandler(PROP_NAME_HTTP_PORT)
+    public void onHTTPPortChange(String setting)
+    {
+        Log.getLog().debug("Entering JettyPlugin.onHTTPPortChange for setting = " + setting );
     }
 }

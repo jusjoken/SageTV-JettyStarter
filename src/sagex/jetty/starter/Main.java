@@ -5,6 +5,8 @@ import org.eclipse.jetty.util.log.Log;
 import sagex.jetty.log.JettyStarterLogger;
 import sagex.jetty.properties.JettyStarterPropertiesImpl;
 
+//@deprecated as no longer needed in SageTV7 or higher
+@Deprecated
 public class Main implements Runnable
 {
     static

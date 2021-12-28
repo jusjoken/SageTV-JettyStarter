@@ -28,7 +28,7 @@
     Default web.xml file.  
     This file is applied to a Web application before it's own WEB_INF/web.xml file
   </description>
-
+  
   <!-- ==================================================================== -->
   <!-- Removes static references to beans from javax.el.BeanELResolver to   -->
   <!-- ensure webapp classloader can be released on undeploy                -->
@@ -134,7 +134,7 @@
     <servlet-class>org.eclipse.jetty.servlet.DefaultServlet</servlet-class>
     <init-param>
       <param-name>aliases</param-name>
-      <param-value>false</param-value>
+      <param-value>true</param-value>
     </init-param>
     <init-param>
       <param-name>acceptRanges</param-name>
@@ -146,7 +146,7 @@
     </init-param>
     <init-param>
       <param-name>welcomeServlets</param-name>
-      <param-value>false</param-value>
+      <param-value>true</param-value>
     </init-param>
     <init-param>
       <param-name>redirectWelcome</param-name>
@@ -166,7 +166,7 @@
     </init-param>
     <init-param>
       <param-name>gzip</param-name>
-      <param-value>false</param-value>
+      <param-value>true</param-value>
     </init-param>
     <init-param>
       <param-name>etags</param-name>
@@ -174,7 +174,7 @@
     </init-param>
     <init-param>
       <param-name>useFileMappedBuffer</param-name>
-      <param-value>true</param-value>
+      <param-value>false</param-value>
     </init-param>
     <!--
     <init-param>
@@ -292,11 +292,15 @@
     </init-param>
     <init-param>
       <param-name>compilerTargetVM</param-name>
-      <param-value>1.7</param-value>
+      <param-value>1.8</param-value>
     </init-param>
     <init-param>
       <param-name>compilerSourceVM</param-name>
-      <param-value>1.7</param-value>
+      <param-value>1.8</param-value>
+    </init-param>
+    <init-param>
+      <param-name>strictQuoteEscaping</param-name>
+      <param-value>false</param-value>
     </init-param>
     <!--  
     <init-param>
@@ -510,6 +514,32 @@
       <encoding>Big5</encoding>
     </locale-encoding-mapping>
   </locale-encoding-mapping-list>
+
+  <!-- ==================================================================== -->
+  <!-- Common SageTV security constraint                        -->
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
+  <security-constraint>
+    <display-name>SecurityConstraint</display-name>
+    <web-resource-collection>
+      <web-resource-name>SageTVWebApps</web-resource-name>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>**</role-name>
+    </auth-constraint>
+  </security-constraint>
+  <!-- TODO:: Not sure if the public path below is working...TODO -->
+  <security-constraint>
+    <display-name>PublicSecurityConstraint</display-name>
+    <web-resource-collection>
+      <web-resource-name>SageTVWebAppsPublic</web-resource-name>
+      <url-pattern>/public/*</url-pattern>
+    </web-resource-collection>
+  </security-constraint>
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>SageTVRealm</realm-name>
+  </login-config>
 
   <!-- ==================================================================== -->
   <!-- Disable TRACE method with security constraint                        -->

@@ -18,7 +18,9 @@ import sagex.jetty.starter.JettyInstance;
 public abstract class JettyProperties
 {
     public static final String JETTY_HOME_PROPERTY = "jetty.home";
-    public static final String JETTY_CONFIG_FILES_PROPERTY = "jetty.configfiles";
+    public static final String JETTY_BASE_PROPERTY = "jetty.base";
+    //public static final String JETTY_CONFIG_FILES_PROPERTY = "jetty.configfiles";
+    public static final String JETTY_EXTRA_CONFIG_FILES_PROPERTY = "jetty.extraconfigfiles";
     public static final String JETTY_LOGS_PROPERTY = "jetty.logs";
     public static final String JETTY_LOG_LEVEL = "jetty.log.level";
     public static final String JETTY_HOST_PROPERTY = "jetty.host";
@@ -36,6 +38,11 @@ public abstract class JettyProperties
 
         setSystemProperties(jettyProperties);
     }
+
+    public static Boolean getPropertyAsBoolean(String propertyName, Boolean defaultValue){
+        String tVal = sagex.api.Configuration.GetProperty(propertyName,defaultValue.toString());
+        return Boolean.valueOf(tVal);
+    }
     
     public abstract Properties getProperties();
     
@@ -43,14 +50,20 @@ public abstract class JettyProperties
 
     private void setSystemProperties(Properties starterProperties)
     {
-        // two properties that must be set as Java system properties so they're
-        // available to the default jetty xml config files
+        // three properties that must be set as Java system properties so they're
+        // available to the default jetty configuration
         String jettyHome = starterProperties.getProperty(JettyProperties.JETTY_HOME_PROPERTY);
+        String jettyBase = starterProperties.getProperty(JettyProperties.JETTY_BASE_PROPERTY);
         String jettyLogs = starterProperties.getProperty(JettyProperties.JETTY_LOGS_PROPERTY);
 
         if (jettyHome == null)
         {
             throw new IllegalStateException(JettyProperties.JETTY_HOME_PROPERTY + " property is not configured");
+        }
+
+        if (jettyBase == null)
+        {
+            throw new IllegalStateException(JettyProperties.JETTY_BASE_PROPERTY + " property is not configured");
         }
 
         if (jettyLogs == null)
@@ -59,6 +72,7 @@ public abstract class JettyProperties
         }
 
         System.setProperty(JettyProperties.JETTY_HOME_PROPERTY, jettyHome);
+        System.setProperty(JettyProperties.JETTY_BASE_PROPERTY, jettyBase);
         System.setProperty(JettyProperties.JETTY_LOGS_PROPERTY, jettyLogs);
     }
 
@@ -69,18 +83,39 @@ public abstract class JettyProperties
     {
         String UQ = "(?<!\\\\)\\\""; // unescaped quotes
         Pattern p = Pattern.compile(UQ + ".*?" + UQ);
-        Matcher m = p.matcher(configFiles);
         List<String> configFileList = new ArrayList<String>();
-        int previousEnd = 0;
-        while (m.find())
-        {
-            if (m.start() > previousEnd)
+        
+        if(configFiles != null) {
+        	Matcher m = p.matcher(configFiles);
+            int previousEnd = 0;
+            while (m.find())
             {
-                // there is some text between the previous match and this match
-                // (or before this match if it's the first match)
-                // split it on spaces
-                String textBetweenMatches = configFiles.substring(previousEnd, m.start()).trim();
-                String[] textArray = textBetweenMatches.split(" ");
+                if (m.start() > previousEnd)
+                {
+                    // there is some text between the previous match and this match
+                    // (or before this match if it's the first match)
+                    // split it on spaces
+                    String textBetweenMatches = configFiles.substring(previousEnd, m.start()).trim();
+                    String[] textArray = textBetweenMatches.split(" ");
+                    for (String text : textArray)
+                    {
+                        if (text.trim().length() > 0)
+                        {
+                            configFileList.add(text);
+                        }
+                    }
+                }
+                String matchingText = configFiles.substring(m.start() + 1, m.end() - 1).trim();
+                configFileList.add(matchingText);
+
+                previousEnd = m.end();
+            }
+
+            if (configFiles.length() > previousEnd)
+            {
+                // text after the last match, split it on spaces
+                String tailText = configFiles.substring(previousEnd, configFiles.length()).trim();
+                String[] textArray = tailText.split(" ");
                 for (String text : textArray)
                 {
                     if (text.trim().length() > 0)
@@ -89,24 +124,7 @@ public abstract class JettyProperties
                     }
                 }
             }
-            String matchingText = configFiles.substring(m.start() + 1, m.end() - 1).trim();
-            configFileList.add(matchingText);
-
-            previousEnd = m.end();
-        }
-
-        if (configFiles.length() > previousEnd)
-        {
-            // text after the last match, split it on spaces
-            String tailText = configFiles.substring(previousEnd, configFiles.length()).trim();
-            String[] textArray = tailText.split(" ");
-            for (String text : textArray)
-            {
-                if (text.trim().length() > 0)
-                {
-                    configFileList.add(text);
-                }
-            }
+        	
         }
 
         String[] configFileArray = new String[configFileList.size()];

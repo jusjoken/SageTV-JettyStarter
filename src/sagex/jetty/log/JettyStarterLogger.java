@@ -1,168 +1,140 @@
 package sagex.jetty.log;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Properties;
+
 import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
+
+import sagex.jetty.starter.JettyPlugin;
+import sagex.jetty.util.PrefItem;
+import sagex.util.Log4jConfigurator;
+import sagex.util.Log4jConfigurator.LogStruct;
 
 
-public class JettyStarterLogger implements Logger
+public class JettyStarterLogger
 {
-    private Logger logger = null;
+    private static String logID = "jettystarter";
+    private static String logAppenderName = "JETTY";
+    private static String defaultLevel = JettyPlugin.LOGLEVEL_CHOICE_INFO;
+    private static ArrayList<String> levelKeys = new ArrayList<String>();
+    private static ArrayList<PrefItem> jettyLogProps = new ArrayList<PrefItem>();
 
+    /*
+     * Initialize and configure the Log4j system based on the log4j.properties
+     */
     public static void init()
     {
-        // Handle all logging for Jetty and Jetty Starter
         // EXCEPTION, DEBUG, VERBOSE, IGNORED
-        System.setProperty("org.eclipse.jetty.util.log.class", JettyStarterLogger.class.getName());
+
+    	//set the classes that we need to set the levels on
+    	levelKeys.add("log4j.logger.org.eclipse.jetty");
+    	levelKeys.add("log4j.logger.sagex.jetty");
+    	
+    	//Use sagex Log4j configurator
+    	Log4jConfigurator.configureQuietly(logID, JettyPlugin.class.getClassLoader());
+        jettyLogProps = getLog4jProperties(logID);
+
+        //TODO:: remove the below
+        for (PrefItem pi : jettyLogProps) {
+            Log.getLog().info("Jetty Log item: Key:" + pi.getKey() + " Value:" + pi.getValue());
+        }      
         
-        // Initialize Jetty's logging through Log's static initializer.  By setting the
-        // property "org.eclipse.jetty.util.log.class" to this class, all logging will be routed
-        // through this class.
-        Log.getLog();
+        //TODO:: remove the below
+        /* output all the logger details to validate loggers
+        Enumeration<Category> loggers = LogManager.getCurrentLoggers();
+        for(; loggers.hasMoreElements(); ) {
+        	Category logger = loggers.nextElement();
+        	Log.getLog().info( "Logger:" + logger.getName() ); 
+        	Log.getLog().info( " - Logger additivity:" + logger.getAdditivity() ); 
+        	Log.getLog().info( " - Logger appenders:" + logger.getAllAppenders().toString() ); 
+        	Log.getLog().info( " - Logger parent:" + logger.getParent() ); 
+        	Log.getLog().info( " - Logger level:" + logger.getLevel() ); 
+        	Log.getLog().info( " - Logger repo:" + logger.getLoggerRepository().toString() ); 
+        }
+        */
         
-        // Attempt to load log4j logger.  If log4j is not in the classpath, log to stderr
-        // via Jetty's implementation.
-        // TODO Log4j, load config file
-//        try
-//        {
-//            Class<Logger> loggerClass = Loader.loadClass(Logger.class, "sagex.jetty.log.Log4jLog");
-//            logger = loggerClass.newInstance().getLogger("sagex.jetty");// = (Logger) loggerClass.newInstance();
-//            Log.info("Jetty logging: Log4j");
-//        }
-//        catch (Throwable e)
-//        {
-//            logger = new StdErrLog();
-//            Log.info("Jetty logging: Java StdErr");
-//        }
     }
     
-//    public JettyStarterLogger() throws Exception
-//    {
-//        this("org.mortbay.log");
-//    }
-//
-
-//    public JettyStarterLogger(String name)
-//    {
-//        logger = org.slf4j.LoggerFactory.getLogger( name );
-//    }
-
+    private static LogStruct getLog(String log) {
+        Log4jConfigurator.LogStruct[] logs =  Log4jConfigurator.getConfiguredLogs();
+        if (logs==null) {
+            return null;
+        }
+        for (int i=0;i<logs.length;i++) {
+            if (log.equals(logs[i].id)) return logs[i];
+        }
+        return null;
+    }
+    
+    private static ArrayList<PrefItem> getLog4jProperties(String logId) {
+        ArrayList<PrefItem> items = new ArrayList<PrefItem>();
+        LogStruct log = getLog(logId);
+        for (Map.Entry<Object, Object> me: log.properties.entrySet()) {
+            PrefItem pi = new PrefItem();
+            pi.setKey(String.valueOf(me.getKey()));
+            pi.setValue(String.valueOf(me.getValue()));
+            items.add(pi);
+        }
+        Collections.sort(items, new Comparator<PrefItem>() {
+            public int compare(PrefItem p1, PrefItem p2) {
+                return p1.getKey().compareTo(p2.getKey());
+            }
+        });
+        return items;
+    }
+    
+    public static void setLogLevel(String newLevel) {
+    	if(getLogLevel().equalsIgnoreCase(newLevel)) {
+    		Log.getLog().info("setLog called but log already at new value:" + newLevel);
+    	}else {
+    		//set new level and save the configuration
+            Properties props = new Properties();
+            for (PrefItem p: jettyLogProps) {
+            	Boolean found = false;
+            	for(String levelKey: levelKeys) {
+            		if(p.getKey().equals(levelKey)){
+            			found = true;
+            		}
+            	}
+            	if(found) {
+            		Log.getLog().info("setLog changing '" + p.getKey() + "' to '" + newLevel + "'");
+                    props.setProperty(p.getKey(), newLevel + ", " + logAppenderName);
+            	}else {
+                    props.setProperty(p.getKey(), p.getValue());
+            	}
+            }
+    		Log.getLog().info("setLog reconfiguring log");
+            Log4jConfigurator.reconfigure(logID, props);
+            jettyLogProps = getLog4jProperties(logID);
+    	}
+    }
+    
+    /*
+     * Get the current log level - if not set then return default
+     */
+    public static String getLogLevel() {
+    	for(PrefItem item:jettyLogProps) {
+    		if(item.getKey().equals(levelKeys.get(0))){
+    			String level = item.getValue(); 
+    			String parts[] = level.split(",");
+    			return parts[0];
+    		}
+    	}
+    	return defaultLevel;
+    }
+    
+    public static Boolean isDebugEnabled() {
+    	if (getLogLevel().contains(JettyPlugin.LOGLEVEL_CHOICE_DEBUG)) {
+    		return true;
+    	}
+    	return false;
+    }
+    
     public JettyStarterLogger()
     {
-        logger = new SageStdOutLog();
     }
 
-    @Override
-    public void debug(String msg, Throwable ex)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.debug(msg, ex);
-    }
-
-    public void debug(String msg, Object arg1, Object arg2)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.debug(msg, arg1, arg2);
-    }
-
-    @Override
-    public void debug(String msg, Object... objects)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.debug(msg, objects);
-    }
-
-    @Override
-    public void debug(String msg, long l)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.debug(msg, l);
-    }
-
-    @Override
-    public String getName()
-    {
-        return logger.getName();
-    }
-
-    @Override
-    public void debug(Throwable throwable)
-    {
-        logger.debug(throwable);
-    }
-
-    @Override
-    public Logger getLogger(String name)
-    {
-        return this;
-    }
-
-    public void info(String msg, Object arg1, Object arg2)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.info(msg, arg1, arg2);
-    }
-
-    @Override
-    public void info(String msg, Object... objects)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.info(msg, objects);
-    }
-
-    @Override
-    public void info(Throwable throwable)
-    {
-        logger.info(throwable);
-    }
-
-    @Override
-    public void info(String msg, Throwable throwable)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.info(msg, throwable);
-    }
-
-    @Override
-    public boolean isDebugEnabled()
-    {
-        return logger.isDebugEnabled();
-    }
-
-    @Override
-    public void setDebugEnabled(boolean enabled)
-    {
-        logger.setDebugEnabled(enabled);
-    }
-
-    @Override
-    public void warn(String msg, Throwable ex)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.warn(msg, ex);
-    }
-
-    public void warn(String msg, Object arg1, Object arg2)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.warn(msg, arg1, arg2);
-    }
-
-    @Override
-    public void warn(String msg, Object... objects)
-    {
-        if (msg == null) msg = "Null Message";
-        logger.warn(msg, objects);
-    }
-
-    @Override
-    public void warn(Throwable throwable)
-    {
-        logger.warn(throwable);
-    }
-
-    @Override
-    public void ignore(Throwable throwable)
-    {
-        logger.ignore(throwable);
-    }
 }
