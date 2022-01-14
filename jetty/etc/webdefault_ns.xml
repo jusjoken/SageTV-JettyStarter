@@ -515,18 +515,15 @@
     </locale-encoding-mapping>
   </locale-encoding-mapping-list>
 
-  <!-- ========================================================================= -->
-  <!-- Common SageTV security constraint - secures all apps unless they override -->
-  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <!-- ==================================================================== -->
+  <!-- Common SageTV security constraint - allows all apps without login    -->
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
   <security-constraint>
     <display-name>SecurityConstraint</display-name>
     <web-resource-collection>
       <web-resource-name>SageTVWebApps</web-resource-name>
       <url-pattern>/*</url-pattern>
     </web-resource-collection>
-    <auth-constraint>
-      <role-name>**</role-name>
-    </auth-constraint>
   </security-constraint>
   <security-constraint>
     <display-name>PublicSecurityConstraint</display-name>

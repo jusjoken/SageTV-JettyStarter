@@ -5,7 +5,7 @@
    <buildnumber/>
    <property file="build.properties"/>
    
-   <property name="plugin.version" value="3.0.1"/>
+   <property name="plugin.version" value="3.0.3"/>
 
    <property name="src.dir"   location="src"/>
    <property name="build.dir" location="build"/>
@@ -32,30 +32,6 @@
       <!-- Include some jars in the classpath when compiling, but don't deliver them -->
       <fileset file="${jetty.extlib.dir}/*.jar"/>
    </path>
-
-   <!--
-      - The target that Hudson calls when launching this build.  It has steps specific
-      - to building from Hudson as opposed to building from the Eclipse development
-      - environment or the command line.
-     -->
-   <target name="hudson">
-      <echo message="Building from Hudson..."/>
-      <!-- use the checked-in properties file -->
-      <copy file="build.properties.template" tofile="build.properties" overwrite="yes" failonerror="no"/>
-      <!-- get environment variables to see if HUDSON_HOME is being used to override the location -->
-      <property environment="env"/>
-      <condition property="hudson.home.dir" value="${env.HUDSON_HOME}" else="${user.home}/.hudson">
-         <isset property="env.HUDSON_HOME"/>
-      </condition>
-      <assertDirAvailable dir="${hudson.home.dir}" message="Hudson home directory ${hudson.home.dir} does not exist." />
-      <echo message="Hudson home directory ${hudson.home.dir}"/>
-      <!-- call the default target of this file -->
-      <ant antfile="build.xml" inheritall="false">
-         <!-- The jar with the SageTV APIs is placed in the Hudson home directory -->
-         <property name="sage.lib.dir" value="${hudson.home.dir}"/>
-         <property name="build.number" value="${env.BUILD_NUMBER}"/>
-      </ant>
-   </target>
 
    <target name="init" depends="clean">
       <tstamp/>
@@ -120,7 +96,7 @@
    </target>
 
    <!--
-      - Create a war file for the /root web application (list of running applications).
+      - Create a war file for the /apps web application (list of running applications).
      -->
    <target name="war" depends="compile">
 
@@ -137,10 +113,10 @@
           <include name="**/*.jsp"/>
       </fixcrlf>
 
-      <war basedir="${build.dir}/war/root"
-           destfile="${build.dir}/root.war"
-           manifest="${build.dir}/war/root/META-INF/MANIFEST.MF"
-           webxml="${build.dir}/war/root/WEB-INF/web.xml"
+      <war basedir="${build.dir}/war/apps"
+           destfile="${build.dir}/apps.war"
+           manifest="${build.dir}/war/apps/META-INF/MANIFEST.MF"
+           webxml="${build.dir}/war/apps/WEB-INF/web.xml"
       >
          <manifest>
             <attribute name="Specification-Title" value="Jetty Web Applications for SageTV"/>
@@ -172,11 +148,11 @@
       </copy>
 
       <copy todir="${build.dir}/zip-legacy/jetty/contexts">
-           <fileset file="resources/contexts/root.xml"/>
+           <fileset file="resources/contexts/apps.xml"/>
       </copy>
 
       <copy todir="${build.dir}/zip-legacy/jetty/webapps">
-          <fileset file="${build.dir}/root.war"/>
+          <fileset file="${build.dir}/apps.war"/>
       </copy>
 
       <fixcrlf srcdir="${build.dir}/zip-legacy" eol="dos">
@@ -236,10 +212,10 @@
    </target>
 
    <!--
-      - Create the plugin package for the /root (old apps) web application war file.
+      - Create the plugin package for the /apps web application war file.
      -->
    <target name="package-war">
-     <copy todir="${build.dir}/packages/war" file="${build.dir}/root.war"/>
+     <copy todir="${build.dir}/packages/war" file="${build.dir}/apps.war"/>
 
      <zip destfile="${build.dir}/packages/jetty-starter-webapp-war-file-${plugin.impl.version}.zip">
        <zipfileset dir="${build.dir}/packages/war" prefix="jetty/webapps" />

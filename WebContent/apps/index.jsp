@@ -23,7 +23,7 @@
    <meta http-equiv="Pragma" content="no-cache"/> 
    <meta http-equiv="Expires" content="0"/> 
    <title>SageTV Web Applications</title>
-   <link rel="stylesheet" type="text/css" href="root.css"/>
+   <link rel="stylesheet" type="text/css" href="apps.css"/>
    <link rel="Shortcut Icon" href="favicon.ico" type="image/x-icon"/>
    <%-- iphone headers --%>
    <meta name="viewport" content="user-scalable=no, width=device-width" /> <%-- iDevices --%>

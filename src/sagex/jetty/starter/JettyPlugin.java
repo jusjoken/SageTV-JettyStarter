@@ -29,6 +29,8 @@ import sagex.plugin.PluginProperty;
 public class JettyPlugin extends AbstractPlugin
 {
     public static final String PROP_NAME_RESTART    = "jetty/restart";
+    public static final String PROP_NAME_SECURITY_ENABLE = "jetty/security.enable";
+    public static final String PROP_NAME_ROOTCONTEXT       = "jetty/rootcontext";
     public static final String PROP_NAME_USER       = "jetty/user";
     public static final String PROP_NAME_PASSWORD   = "jetty/password";
     public static final String PROP_NAME_HTTP_PORT  = "jetty/" + JettyProperties.JETTY_PORT_PROPERTY;
@@ -42,6 +44,8 @@ public class JettyPlugin extends AbstractPlugin
     public static final String PROP_NAME_LOCATOR_HTTP_URL  = "jetty/locator.http.url";
     public static final String PROP_NAME_LOCATOR_HTTPS_URL = "jetty/locator.https.url";
 
+    public static final String PROP_DEFAULT_ROOTCONTEXT       = "/apps";
+
     private static final List<String> PROP_RESTART_REQUIRED = new ArrayList<String>();
     private static final List<String> PROP_UPNPCONFIG_REQUIRED = new ArrayList<String>();
 
@@ -49,7 +53,7 @@ public class JettyPlugin extends AbstractPlugin
     public static final String PROP_HELP_UPNP_DEFAULT  = "Choose whether to automatically or manually configure your router or firewall to allow access to SageTV's web server from outside your home network.";
     public static final String PROP_HELP_UPNP_DISABLED_DEFAULT_LOGIN = "UPnP cannot be configured for Jetty when using the default user name or password.";
     public static final String PROP_HELP_UPNP_DISABLED_PLACESHIFTER_UPNP_DISABLED = "Placeshifter UPnP must first be configured in Detailed Setup.";
-    
+    public static final String PROP_HELP_ROOTCONTEXT = "Choose the web application to load for the root context (ie: http://IP:port/).";
     public static final String UPNP_CHOICE_UNAVAILABLE              = "Unavailable";
     public static final String UPNP_CHOICE_MANUAL_CONFIGURATION     = "Manual Configuration";
     public static final String UPNP_CHOICE_AUTO_CONFIGURATION       = "Automatic UPnP Configuration";
@@ -81,6 +85,8 @@ public class JettyPlugin extends AbstractPlugin
         PROP_RESTART_REQUIRED.add(PROP_NAME_HTTP_PORT);
         PROP_RESTART_REQUIRED.add(PROP_NAME_SSL_ENABLE);
         PROP_RESTART_REQUIRED.add(PROP_NAME_HTTPS_PORT);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_ROOTCONTEXT);
+        PROP_RESTART_REQUIRED.add(PROP_NAME_SECURITY_ENABLE);
         //PROP_RESTART_REQUIRED.add(PROP_NAME_LOG_LEVEL);
         
         PROP_UPNPCONFIG_REQUIRED.add(PROP_NAME_UPNP);
@@ -101,25 +107,41 @@ public class JettyPlugin extends AbstractPlugin
                     "Restart Web Server",
                     "Click to restart the SageTV web server after changing its settings. Properties marked with '*' have been modified and require the web server to be restarted.");
 
+        addProperty(SageTVPlugin.CONFIG_BOOL,
+                PROP_NAME_SECURITY_ENABLE,
+                "true",
+                "Enable Login Security",
+                "Enable login security for all apps.  If disabled, any user on your network will have access to all web applications.  Not recommended unless you are certain your network is secured in other ways.");
+
+        addProperty(SageTVPlugin.CONFIG_CHOICE,
+                PROP_NAME_ROOTCONTEXT,
+                "/apps",
+                "Default web application",
+                PROP_HELP_ROOTCONTEXT,
+                JettyInstance.getAllContexts());
+
         addProperty(SageTVPlugin.CONFIG_TEXT,
                     PROP_NAME_USER,
                     "sage",
                     "User",
-                    "The user name for logging in to web applications.")
-                    .setPersistence(new UserRealmPersistence());
+                    "The user name for logging in to web applications. Default is 'sage'.")
+                    .setPersistence(new UserRealmPersistence())
+                    .setVisibleOnSetting(this,PROP_NAME_SECURITY_ENABLE);
     
         addProperty(SageTVPlugin.CONFIG_PASSWORD,
                     PROP_NAME_PASSWORD,
                     "frey",
                     "Password",
                     "The user's password.  The default password is 'frey'.")
-                    .setPersistence(new UserRealmPersistence());
+                    .setPersistence(new UserRealmPersistence())
+                    .setVisibleOnSetting(this,PROP_NAME_SECURITY_ENABLE);
 
         addProperty(SageTVPlugin.CONFIG_BOOL,
                     PROP_NAME_SSL_ENABLE,
                     "false",
                     "Enable SSL",
-                    "Enable an encrypted HTTPS connection.  Keystore must be set up manually.  See http://tools.assembla.com/sageplugins/wiki/JettyPluginSSL.");
+                    "Enable an encrypted HTTPS connection.  Keystore must be set up manually.")
+                    .setVisibleOnSetting(this,PROP_NAME_SECURITY_ENABLE);
 //                    "Enable use of an encrypted HTTPS connection.  See http://tools.assembla.com/sageplugins/wiki/JettySSL.")
 
         addProperty(SageTVPlugin.CONFIG_INTEGER,
@@ -288,6 +310,13 @@ public class JettyPlugin extends AbstractPlugin
         {
             help = getLocatorHttpsUrl();
         }
+        else if (PROP_NAME_ROOTCONTEXT.equals(setting))
+        {
+            String serverIP = sagex.api.Global.GetServerAddress();
+            String serverPort = Configuration.GetProperty(JettyPlugin.PROP_NAME_HTTP_PORT, "8080");
+            help = "Choose the web application to load for the root context (ie: http://" + serverIP + ":" + serverPort + ").";
+            ;
+        }
 
         if (help == null)
         {
@@ -308,6 +337,15 @@ public class JettyPlugin extends AbstractPlugin
         }
 
         return label;
+    }
+
+    @Override
+    public String[] getConfigOptions(String setting) {
+        Log.getLog().info("Entering JettyPlugin.getConfigOptions(" + setting + ")");
+        if(setting.equals(PROP_NAME_ROOTCONTEXT)){
+            return JettyInstance.getAllContexts();
+        }
+        return super.getConfigOptions(setting);
     }
 
     @Override
@@ -389,9 +427,7 @@ public class JettyPlugin extends AbstractPlugin
                     }
                 }
             }
-        }
-
-        if (PROP_NAME_LOG_LEVEL.equals(setting)) {
+        }else if (PROP_NAME_LOG_LEVEL.equals(setting)) {
         	configValue = JettyStarterLogger.getLogLevel();
         	/*
             if (super.getConfigValue(setting).equals(LOGLEVEL_CHOICE_VERBOSE_DEPRECATED)) {
@@ -399,6 +435,9 @@ public class JettyPlugin extends AbstractPlugin
                 configValue = LOGLEVEL_CHOICE_INFO;
             }
             */
+        }else if (PROP_NAME_PASSWORD.equals(setting)) {
+            //catch this so we do not log the password
+            configValue = super.getConfigValue(setting);
         }
 
         if (configValue == null)
@@ -407,16 +446,26 @@ public class JettyPlugin extends AbstractPlugin
             configValue = super.getConfigValue(setting);
         }
 
-        Log.getLog().info("JettyPlugin.getConfigValue for:" + setting + " returning " + configValue);
+        //catch this so we do not log the password
+        if(PROP_NAME_PASSWORD.equals(setting)){
+            Log.getLog().info("JettyPlugin.getConfigValue for PASSWORD - not reporting value in log");
+        }else{
+            Log.getLog().info("JettyPlugin.getConfigValue for:" + setting + " returning " + configValue);
+        }
         return configValue;
     }
 
+
+
     public void setConfigValue(String setting, String value)
     {
-        Log.getLog().info("JettyPlugin.setConfigValue(" + setting + ", " + value + "))");
         String originalValue = getConfigValue(setting);
-        Log.getLog().info("JettyPlugin.setConfigValue: originalValue = '" + originalValue + "'");
-        
+        if(PROP_NAME_PASSWORD.equals(setting)){
+            Log.getLog().info("JettyPlugin.setConfigValue for password so not reporting originalValue in log");
+        }else{
+            Log.getLog().info("JettyPlugin.setConfigValue: originalValue = '" + originalValue + "'");
+        }
+
         // remove the current UPnP settings and router mappings before changing the property values
         if (!Global.IsClient() && PROP_UPNPCONFIG_REQUIRED.contains(setting))
         {
@@ -432,10 +481,16 @@ public class JettyPlugin extends AbstractPlugin
         }
 
         // call AbstractPlugin
-        Log.getLog().info("JettyPlugin.setConfigValue - calling super on: " + setting + " , " + value);
-        super.setConfigValue(setting, value);
-        Log.getLog().info("JettyPlugin.setConfigValue - returned from super on: " + setting + " , " + value);
-        
+        if(PROP_NAME_PASSWORD.equals(setting)){
+            Log.getLog().info("JettyPlugin.setConfigValue - calling super on PASSWORD - not showing value in log ");
+            super.setConfigValue(setting, value);
+            Log.getLog().info("JettyPlugin.setConfigValue - returned from super on PASSWORD - not showing value in log ");
+        }else{
+            Log.getLog().info("JettyPlugin.setConfigValue - calling super on: " + setting + " , " + value);
+            super.setConfigValue(setting, value);
+            Log.getLog().info("JettyPlugin.setConfigValue - returned from super on: " + setting + " , " + value);
+        }
+
         if (!Global.IsClient() && PROP_UPNPCONFIG_REQUIRED.contains(setting))
         {
             UPnPConfiguration.configureUPnP(this);
@@ -769,7 +824,7 @@ public class JettyPlugin extends AbstractPlugin
         start();
     }
 
-    @ButtonClickHandler(value=PROP_NAME_LOCATOR_HTTP_URL)
+        @ButtonClickHandler(value=PROP_NAME_LOCATOR_HTTP_URL)
     public void onLocatorHttpUrlButtonClicked(String setting, String value)
     {
         Log.getLog().info("Entering JettyPlugin.onLocatorHttpUrlButtonClicked(" + setting + ", " + value + ")");
@@ -802,4 +857,11 @@ public class JettyPlugin extends AbstractPlugin
     {
         Log.getLog().debug("Entering JettyPlugin.onHTTPPortChange for setting = " + setting );
     }
+
+    @ConfigValueChangeHandler(PROP_NAME_ROOTCONTEXT)
+    public void onRootContextChange(String setting)
+    {
+        Log.getLog().debug("Entering JettyPlugin.onRootContextChange for setting = " + setting );
+    }
+
 }

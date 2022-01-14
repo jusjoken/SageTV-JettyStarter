@@ -18,11 +18,13 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Desktop>false</Desktop>
   <ResourcePath>jetty</ResourcePath>
   <Screenshot title="Web Application List">http://sageplugins.sourceforge.net/screenshots/jetty/SageTVWebApps.png</Screenshot>
-  <Webpage title="Jetty Plugin 2.0 Forum Support Thread">http://forums.sagetv.com/forums/showthread.php?t=48818</Webpage>
+  <Webpage title="Jetty Plugin 3.0 Forum Support Thread">https://forums.sagetv.com/forums/showthread.php?t=66898</Webpage>
   <Webpage title="Jetty Home Page">http://eclipse.org/jetty/</Webpage>
   <Webpage title="Plugin Source Code">https://github.com/jusjoken/SageTV-JettyStarter</Webpage>
   <ReleaseNotes>
     <![CDATA[
+Version 3.0.3
+1. Add plugin configuration option to disable login security
 Version 3.0.0
 1. Migrate from Jetty 6 to Jetty 9
     - Requires Java 8, supports Java 9+

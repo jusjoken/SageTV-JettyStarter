@@ -11,7 +11,9 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.rewrite.handler.*;
 import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.deploy.DeploymentManager;
@@ -19,10 +21,6 @@ import org.eclipse.jetty.deploy.PropertiesConfigurationManager;
 import org.eclipse.jetty.deploy.bindings.DebugListenerBinding;
 import org.eclipse.jetty.deploy.providers.WebAppProvider;
 import org.eclipse.jetty.jmx.MBeanContainer;
-import org.eclipse.jetty.rewrite.handler.MsieSslRule;
-import org.eclipse.jetty.rewrite.handler.RewriteHandler;
-import org.eclipse.jetty.rewrite.handler.RewritePatternRule;
-import org.eclipse.jetty.rewrite.handler.ValidUrlRule;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
@@ -88,7 +86,7 @@ public class JettyInstance extends AbstractLifeCycle
            {
                ContextHandler context = (ContextHandler)handlerArray[i];
                if (("/".equals(context.getContextPath())) ||
-                   ("/root".equals(context.getContextPath())))
+                   ("/apps".equals(context.getContextPath())))
                {
                    continue;
                }
@@ -279,6 +277,37 @@ public class JettyInstance extends AbstractLifeCycle
                }
            }
 
+        }
+    }
+
+    public static String[] getAllContexts() {
+        Log.getLog().info("getAllContexts: started");
+        if(instance.getServers().size()>0){
+            Log.getLog().info("getAllContexts: server found - getting contexts");
+            Server oneServer = instance.getServers().get(0);
+            List<String> contextList = new ArrayList<String>();
+
+            Handler[] handlerArray = (oneServer == null) ? null : oneServer.getChildHandlersByClass(ContextHandler.class);
+
+            if (handlerArray == null){
+                Log.getLog().info("JettyInstance: getAllContexts - handlerArray is NULL - no Contexts found");
+                return new String[0];
+            }else{
+                for (int i = 0; handlerArray != null && i < handlerArray.length; i++)
+                {
+                    ContextHandler context = (ContextHandler)handlerArray[i];
+                    Log.getLog().info("JettyInstance: getAllContexts - CONTEXT SESSION " + context.getDisplayName() + " found:" + context.getServer().getSessionIdManager().getSessionHandlers());
+                    contextList.add(context.getContextPath());
+                }
+            }
+
+            // Sort the contexts by name
+            Collections.sort(contextList);
+
+            return contextList.toArray(new String[0]);
+        }else{
+            Log.getLog().info("getAllContexts: server not available yet");
+            return new String[0];
         }
     }
 
@@ -587,6 +616,9 @@ public class JettyInstance extends AbstractLifeCycle
     public static Server createServer(int port, int securePort, boolean addDebugListener) throws Exception
     {
         Log.getLog().info("Create Server started: Port:" + port + " securePort:" + securePort);
+        //set this to false to bypass login
+        Boolean secureLogin = sagex.api.Configuration.GetProperty(JettyPlugin.PROP_NAME_SECURITY_ENABLE,true);
+
         // Note that if you set this to port 0 then a randomly available port
         // will be assigned that you can either look in the logs for the port,
         // or programmatically obtain it for use in test cases.
@@ -627,83 +659,51 @@ public class JettyInstance extends AbstractLifeCycle
         httpConfig.setRelativeRedirectAllowed(false);
         // httpConfig.addCustomizer(new ForwardedRequestCustomizer());
         Log.getLog().info("Setup HTTP");
-        
-        /* Failed attempt at FORM based login...leaving here incase want to revisit
-        Boolean secureLogin = false;
-        if(secureLogin) {
-            Log.getLog().info("Setup SageTVRealm - JAAS");
-            JAASLoginService loginService = new JAASLoginService();
-            loginService.setName("SageTVRealm");
-            loginService.setLoginModuleName("xyz");
-            server.addBean(loginService);
 
-            //added below for form auth
-            Constraint constraint = new Constraint();
-            constraint.setName(Constraint.__FORM_AUTH);
-            constraint.setAuthenticate(true);
-            constraint.setRoles(new String[] { "user", "admin" });
+        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+        // === SageTVRealm ===
+        Log.getLog().info("Setup SageTVRealm - BASIC");
+        HashLoginService login = new HashLoginService();
+        login.setName("SageTVRealm");
+        login.setConfig(jettyBase + "/etc/realm.properties");
+        login.setHotReload(false);
+        server.addBean(login);
 
-            ConstraintMapping mapping = new ConstraintMapping();
-            mapping.setPathSpec("/*");
-            mapping.setConstraint(constraint);
-            securityHandler.addConstraintMapping(mapping);
-            
-            FormAuthenticator authenticator = new FormAuthenticator("/login.html", "/authfail.html", false);
-            //added above for form auth
+        securityHandler.setLoginService(login);
+        securityHandler.setHandler(server.getHandler());
+        Log.getLog().info("Setup SageTVRealm - BASIC done");
 
-            securityHandler.setLoginService(loginService);
-            securityHandler.setHandler(server.getHandler());
-            securityHandler.setAuthenticator(authenticator);
-            server.setHandler(securityHandler);
-            Log.getLog().info("Setup SageTVRealm - JAAS done");
-        }
-        */
+        // === Rewrite Handler
+        RewriteHandler rewrite = new RewriteHandler();
+        rewrite.setHandler(server.getHandler());
+        rewrite.addRule(new MsieSslRule());
+        rewrite.addRule(new ValidUrlRule());
+        RedirectPatternRule rprOldtoNew = new RedirectPatternRule();
+        rprOldtoNew.setPattern("");
+        String defaultContext = sagex.api.Configuration.GetProperty(JettyPlugin.PROP_NAME_ROOTCONTEXT,JettyPlugin.PROP_DEFAULT_ROOTCONTEXT);
+        Log.getLog().info("Rewrite handler: setting default root context to:" + defaultContext);
+        rprOldtoNew.setLocation(defaultContext);
+        rewrite.addRule(rprOldtoNew);
+        Log.getLog().info("Setup Rewrite handler");
 
-        Boolean secureLogin2 = true;
-        if(secureLogin2) {
-            ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
-            //TODO: not in example
-            // === test-realm.xml ===
-            Log.getLog().info("Setup SageTVRealm - BASIC");
-            HashLoginService login = new HashLoginService();
-            login.setName("SageTVRealm");
-            login.setConfig(jettyBase + "/etc/realm.properties");
-            login.setHotReload(false);
-            server.addBean(login);
-
-            /*
-            //BASIC security handler
-            //ConstraintSecurityHandler securityB = new ConstraintSecurityHandler();
-            Constraint constraintB = new Constraint();
-            constraintB.setName(Constraint.__BASIC_AUTH);
-            constraintB.setAuthenticate(true);
-            //constraintB.setRoles(new String[] { "user", "admin" });
-            constraintB.setRoles(new String[] {Constraint.ANY_AUTH });
-
-            ConstraintMapping mapping = new ConstraintMapping();
-            mapping.setPathSpec("/*");
-            mapping.setConstraint(constraintB);
-            securityHandler.addConstraintMapping(mapping);
-            securityHandler.setRealmName("SageTVRealm");
-            securityHandler.setAuthenticator(new BasicAuthenticator());
-            */
-            securityHandler.setLoginService(login);
-            securityHandler.setHandler(server.getHandler());
-            server.setHandler(securityHandler);
-            Log.getLog().info("Setup SageTVRealm - BASIC done");
-
-        }
-        
         // Handler Structure
         HandlerCollection handlers = new HandlerCollection();
         ContextHandlerCollection contexts = new ContextHandlerCollection();
         DefaultHandler defaultHandler = new DefaultHandler();
-        //handlers.setHandlers(new Handler[]{contexts, securityHandler, defaultHandler});
-        handlers.setHandlers(new Handler[]{contexts, defaultHandler});
+
+        //GZIP Handler
+        GzipHandler gzipHandler = new GzipHandler();
+        gzipHandler.setIncludedMethods("POST", "GET");
+        gzipHandler.setInflateBufferSize(2048);
+        gzipHandler.setIncludedMimeTypes("text/html", "text/plain", "text/xml", "text/css", "application/javascript", "text/javascript","text/json","application/x-javascript","application/json","application/xml","application/xml+xhtml","image/svg+xml");
+        gzipHandler.setHandler(contexts);
+        Log.getLog().info("Setup gzipHandler");
+
+        //Complete handler setup
+        handlers.setHandlers(new Handler[]{securityHandler,rewrite, contexts, defaultHandler});
         server.setHandler(handlers);
         Log.getLog().info("Setup Handler");
 
-        
         //TODO: not in example
         // === jetty-jmx.xml ===
         MBeanContainer mbContainer = new MBeanContainer(
@@ -723,39 +723,6 @@ public class JettyInstance extends AbstractLifeCycle
         http.getSelectorManager().setConnectTimeout(15000);
         server.addConnector(http);
         Log.getLog().info("Setup jetty-http.xml");
-
-        /*
-        //TODO: not in example
-        // === jetty-https.xml ===
-        // SSL Context Factory
-        Log.getLog().info("Keystore path: checking");
-        Path keystorePath = Paths.get("jetty/etc/keystore").toAbsolutePath();
-        Log.getLog().info("Keystore path:" + keystorePath.toString());
-        if (!Files.exists(keystorePath))
-            throw new FileNotFoundException(keystorePath.toString());
-        SslContextFactory sslContextFactory = new SslContextFactory.Server();
-        sslContextFactory.setKeyStorePath(keystorePath.toString());
-        sslContextFactory.setKeyStorePassword("OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4");
-        sslContextFactory.setKeyManagerPassword("OBF:1u2u1wml1z7s1z7a1wnl1u2g");
-        sslContextFactory.setTrustStorePath(keystorePath.toString());
-        sslContextFactory.setTrustStorePassword("OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4");
-        Log.getLog().info("Setup jetty-https.xml");
-
-        //TODO: not in example
-        // SSL HTTP Configuration
-        HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
-        httpsConfig.addCustomizer(new SecureRequestCustomizer());
-        Log.getLog().info("Setup SSL HTTP");
-
-        //TODO: not in example
-        // SSL Connector
-        ServerConnector sslConnector = new ServerConnector(server,
-            new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-            new HttpConnectionFactory(httpsConfig));
-        sslConnector.setPort(securePort);
-        server.addConnector(sslConnector);
-        Log.getLog().info("Setup SSL Connector");
-         */
 
         // === jetty-deploy.xml ===
         DeploymentManager deployer = new DeploymentManager();
@@ -777,7 +744,15 @@ public class JettyInstance extends AbstractLifeCycle
 
         WebAppProvider webAppProvider = new WebAppProvider();
         webAppProvider.setMonitoredDirName(jettyBase + "/webapps");
-        webAppProvider.setDefaultsDescriptor(jettyHome + "/etc/webdefault.xml");
+
+        //use a different webdefault depending on if security is enabled
+        if(secureLogin){
+            //use webdefault that secures all apps
+            webAppProvider.setDefaultsDescriptor(jettyHome + "/etc/webdefault.xml");
+        }else{
+            //use webdefault that allows all apps full access without login
+            webAppProvider.setDefaultsDescriptor(jettyHome + "/etc/webdefault_ns.xml");
+        }
         webAppProvider.setScanInterval(1);
         webAppProvider.setExtractWars(true);
         webAppProvider.setConfigurationManager(new PropertiesConfigurationManager());
@@ -786,12 +761,6 @@ public class JettyInstance extends AbstractLifeCycle
         server.addBean(deployer);
         Log.getLog().info("Setup jetty-deploy.xml");
 
-        //TODO: do I need an App ?
-        //App app = new App(deployer, webAppProvider, jettyBase + "/webapps");
-        
-
-        
-        //TODO: not in example
         // === setup jetty plus ==
         Configuration.ClassList classlist = Configuration.ClassList
             .setServerDefault(server);
@@ -814,19 +783,6 @@ public class JettyInstance extends AbstractLifeCycle
         server.addBeanToAllConnectors(new ConnectionStatistics());
         Log.getLog().info("Setup jetty-stats.xml");
         */
-
-        //TODO: not in example
-        // === Rewrite Handler
-        RewriteHandler rewrite = new RewriteHandler();
-        rewrite.setHandler(server.getHandler());
-        server.setHandler(rewrite);
-        rewrite.addRule(new MsieSslRule());
-        rewrite.addRule(new ValidUrlRule());
-        RewritePatternRule oldToNew = new RewritePatternRule();
-        oldToNew.setPattern("/apps");
-        oldToNew.setReplacement("/");
-        rewrite.addRule(oldToNew);
-        Log.getLog().info("Setup Rewrite handler");
 
         //TODO: not in example
         // === jetty-requestlog.xml ===
@@ -956,6 +912,7 @@ public class JettyInstance extends AbstractLifeCycle
         return server;
     }
 
+    /*
     private void configureTempDirs()
     {
         Log.getLog().info("Number of configuration objects " + configurationObjects.size());
@@ -1012,6 +969,8 @@ public class JettyInstance extends AbstractLifeCycle
             }
         }
     }
+
+     */
     
     /**
      * Print startup errors held in any WebAppContext object
