@@ -17,7 +17,7 @@ The plugin consists of two parts.  The first part is Jetty, a 3rd-party Java web
   <Version>@@plugin-impl-version@@</Version>
   <Desktop>false</Desktop>
   <ResourcePath>jetty</ResourcePath>
-  <Screenshot title="Web Application List">http://sageplugins.sourceforge.net/screenshots/jetty/SageTVWebApps.png</Screenshot>
+  <Screenshot title="Web Application List">https://raw.githubusercontent.com/jusjoken/SageTV-JettyStarter/master/resources/WebApplications.png</Screenshot>
   <Webpage title="Jetty Plugin 3.0 Forum Support Thread">https://forums.sagetv.com/forums/showthread.php?t=66898</Webpage>
   <Webpage title="Jetty Home Page">http://eclipse.org/jetty/</Webpage>
   <Webpage title="Plugin Source Code">https://github.com/jusjoken/SageTV-JettyStarter</Webpage>

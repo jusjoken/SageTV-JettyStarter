@@ -111,7 +111,7 @@ public class JettyPlugin extends AbstractPlugin
                 PROP_NAME_SECURITY_ENABLE,
                 "true",
                 "Enable Login Security",
-                "Enable login security for all apps.  If disabled, any user on your network will have access to all web applications.  Not recommended unless you are certain your network is secured in other ways.");
+                "Enable login security for all apps.  If disabled, any user on your network will have access to all web applications.  Not recommended.");
 
         addProperty(SageTVPlugin.CONFIG_CHOICE,
                 PROP_NAME_ROOTCONTEXT,

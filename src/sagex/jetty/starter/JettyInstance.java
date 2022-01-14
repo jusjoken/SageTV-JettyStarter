@@ -618,6 +618,11 @@ public class JettyInstance extends AbstractLifeCycle
         Log.getLog().info("Create Server started: Port:" + port + " securePort:" + securePort);
         //set this to false to bypass login
         Boolean secureLogin = JettyProperties.getPropertyAsBoolean(JettyPlugin.PROP_NAME_SECURITY_ENABLE,true);
+        if(secureLogin){
+            Log.getLog().info("Create Server: starting in secure mode");
+        }else{
+            Log.getLog().info("Create Server: login security disabled by user in plugin configuration");
+        }
 
         // Note that if you set this to port 0 then a randomly available port
         // will be assigned that you can either look in the logs for the port,
